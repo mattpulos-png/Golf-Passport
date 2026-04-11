@@ -1,10 +1,9 @@
 course_name,geocoded_address,latitude,longitude,confidence,Google Map Link
-Other,SKIPPED — generic name,,,SKIP,
-St. Davids-Silver,"Future site of Queenston Quarry Golf Course, 5523, St. Davids, Niagara-on-the-Lake, Niagara Region, Golden Horseshoe, Ontario, Canada",43.1516,-79.0877792,HIGH,
+St. Davids-Silver,"St. Davids Golf Club, 845, Radnor Street Rd, Wayne, PA 19087, United States",40.058288,-75.384693,HIGH,
 Penn State University GC White,NOT FOUND,40.7879748,-77.8839687,MANUAL,https://maps.app.goo.gl/SDn1k9ntFiPrjwJA7
 Toftrees Resort,NOT FOUND,40.824428,-77.9005251,MANUAL,https://maps.app.goo.gl/vbXNZ58C2Hu72VHF6
 Rolling Green Golf Club,"Rolling Green Golf Club, Stanfield Road, Springfield Township, Delaware County, Pennsylvania, 19064, United States",39.9457389,-75.3383248,HIGH,
-St. Davids Golf Club,"St Davids City Golf Club, B4583, St. David's and the Cathedral Close, St Davids, Pembrokeshire, Wales, SA62 6PT, United Kingdom",43.1516,-79.0877792,HIGH,
+St. Davids Golf Club,"St. Davids Golf Club, 845, Radnor Street Rd, Wayne, PA 19087, United States",40.058288,-75.384693,HIGH,
 Aronimink Golf Club,"Aronimink Golf Club, Aronwold Lane, Wyola, Newtown Township, Delaware County, Pennsylvania, 19073, United States",40.0088426,-75.4119538,HIGH,
 Llanerch Country Club,"Llanerch Country Club, Foss Avenue, Garrettford, Upper Darby, Delaware County, Pennsylvania, 19026, United States",39.9669268,-75.3095012,HIGH,
 Sandy Run Country Club,"Sandy Run Country Club, Fleming Road, Arlingham, Springfield Township, Montgomery County, Pennsylvania, 19031, United States",40.11982,-75.1982352,HIGH,
@@ -34,7 +33,7 @@ Turtle Creek-Blue,"Turtle Creek Golf Course, 9044, R-Drive South, Burlington, Ca
 Merion Golf Club East,NOT FOUND,40.0018685,-75.3118038,MANUAL,https://maps.app.goo.gl/kUapHLTChbwdqcxL7
 Downingtown-Blue,"Downingtown Country Club, 93, Bowery Lane, East Village, Downingtown, Chester County, Pennsylvania, 19335, United States",40.0119893,-75.679475,HIGH,
 White Clay-White Clay Creek-Wh,NOT FOUND,39.7295,-75.7497,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJqX9aKqUBx4kRQt8StAKzkbQ
-St. Davids-Black,"Future site of Queenston Quarry Golf Course, 5523, St. Davids, Niagara-on-the-Lake, Niagara Region, Golden Horseshoe, Ontario, Canada",43.1516,-79.0877792,HIGH,
+St. Davids-Black,"St. Davids Golf Club, 845, Radnor Street Rd, Wayne, PA 19087, United States",40.058288,-75.384693,HIGH,
 State College Elks CC,NOT FOUND,40.7932,-77.8619,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJLYRDK_evzokRsYDCQNAZ8TM
 Philadelphia Country Club Spri,NOT FOUND,40.0623223,-75.2921388,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJ8Y2I4fu-xokRXMu68gwC4Sg
 Merion-East-Back,NOT FOUND,40.0018685,-75.3118038,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJFUQC8WnAxokRnMsYFU9RVkk
@@ -45,7 +44,7 @@ Blue Heron Pines,NOT FOUND,39.4775,-74.6473,MANUAL,https://www.google.com/maps/p
 Plymouth Country Club,NOT FOUND,40.1112,-75.2835,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJcSfQTri9xokRsxoFg-Ri26Q
 Skytop Lodge,NOT FOUND,41.2276,-75.2374,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJtzNbc42XxIkRxJ1AlsmU4t0
 Penn State University Golf Cou,NOT FOUND,40.7879748,-77.8839687,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJrYIkq4mozokRRTDEQVU0GQM
-St. Davids Golf Club Black,NOT FOUND,43.1516,-79.0877792,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJKfJG0ByVxokRT0iHCnxW0xs
+St. Davids Golf Club Black,"St. Davids Golf Club, 845, Radnor Street Rd, Wayne, PA 19087, United States",40.058288,-75.384693,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJKfJG0ByVxokRT0iHCnxW0xs
 St Davids Golf Club,"St Davids City Golf Club, B4583, St. David's and the Cathedral Close, St Davids, Pembrokeshire, Wales, SA62 6PT, United Kingdom",51.8951295,-5.2884166,HIGH,
 Baltusrol Upper,"Baltusrol Golf Club, Shunpike Road, Springfield, Union County, New Jersey, 07081, United States",40.7048611,-74.3281116,HIGH,
 Laurel Valley Golf Club,"Crescent Golf Club, 220, Laurel Valley Way, Hidden Creek, Milford Knoll, Salisbury, Rowan County, North Carolina, 28144, United States",35.700979,-80.4930116,HIGH,
@@ -88,14 +87,14 @@ The Country Club at Mirasol - SUNRISE COURSE,NOT FOUND,26.8755,-80.1786,MANUAL,h
 Legacy Golf Club,"Club Wyndham Legacy Golf Resort, 6808, South 32nd Street, South Mountain, Phoenix, Maricopa County, Arizona, 85042, United States",33.3852838,-112.0194845,HIGH,
 Troon North Golf Course - Monument Course,"Troon North Golf Club, 10320, East Dynamite Boulevard, Troon North, Scottsdale, Maricopa County, Arizona, 85262, United States",33.7465568,-111.8633506,HIGH,
 We-Ko-Pa Golf Club - Cholla,"We-Ko-Pa Golf Club, 18200, East WeKoPa Way, Fort McDowell, Maricopa County, Arizona, 85264, United States",33.5880285,-111.6888047,HIGH,
-St Davids Golf Club - St. Davids Golf Club / St Davids Golf Club - St. Davids Golf Club,NOT FOUND,43.1516,-79.0877792,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJKfJG0ByVxokRT0iHCnxW0xs
+St Davids Golf Club - St. Davids Golf Club / St Davids Golf Club - St. Davids Golf Club,"St. Davids Golf Club, 845, Radnor Street Rd, Wayne, PA 19087, United States",40.058288,-75.384693,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJKfJG0ByVxokRT0iHCnxW0xs
 Golf Course at Glen Mills,NOT FOUND,39.9203347,-75.5058113,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJXyIeusjvxokRr3jkl17JV6I
 Huntingdon Valley Country Club Centennial/Toomey,"Huntingdon Valley Country Club, 2295, Country Club Drive, Willow Grove, Upper Moreland Township, Montgomery County, Pennsylvania, 19006, United States",40.1335297,-75.0911567,HIGH,
 Bethpage State Park Black,NOT FOUND,40.7452,-73.4629,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJbe9R2poq6IkRZT-4KYK7YRI
 Gullane No.1,"Gullane Golf Club, West Links Road, Gullane, East Lothian, Scotland, EH31 2BB, United Kingdom",56.0301907,-2.8455394,HIGH,
 Muirfield,"Muirfield, Duncur Road, Gullane, East Lothian, Scotland, EH31 2EG, United Kingdom",56.0456662,-2.8213279,HIGH,
 Gullane No.2,"Gullane Golf Club, West Links Road, Gullane, East Lothian, Scotland, EH31 2BB, United Kingdom",56.0301907,-2.8455394,HIGH,
-St Davids Golf Club St. Davids Golf Club,NOT FOUND,43.1516,-79.0877792,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJKfJG0ByVxokRT0iHCnxW0xs
+St Davids Golf Club St. Davids Golf Club,"St. Davids Golf Club, 845, Radnor Street Rd, Wayne, PA 19087, United States",40.058288,-75.384693,MANUAL,https://www.google.com/maps/place/?q=place_id:ChIJKfJG0ByVxokRT0iHCnxW0xs
 Farleigh Club & Restaurant (1006165) Green (Blue 9 & Yellow 9),"Farleigh Golf Club, Old Farleigh Road, Chelsham and Farleigh, Chelsham, Tandridge, Surrey, England, CR6 9PE, United Kingdom",51.3313648,-0.0347459,HIGH,
 Mill Hill Golf Club (1011373) Mill Hill,"Mill Hill Golf Club, 100, Barnet Way, London Borough of Barnet, Greater London, England, NW7 3AL, United Kingdom",51.6286279,-0.2530935,HIGH,
 Overlook Golf Course,"Overlook Golf Course, Lititz Pike, Brooklawn, Clearview, Neffsville, Manheim Township, Lancaster County, Pennsylvania, 17601, United States",40.0797781,-76.3144669,HIGH,
