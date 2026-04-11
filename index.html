@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Golf Passport ⛳</title>
+
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #000; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif; }
+#map { width: 100vw; height: 100vh; }
+
+/* ── MapLibre overrides ── */
+.maplibregl-ctrl-bottom-right,
+.maplibregl-ctrl-bottom-left { display: none; }
+.maplibregl-ctrl-top-right .maplibregl-ctrl-zoom-in,
+.maplibregl-ctrl-top-right .maplibregl-ctrl-zoom-out,
+.maplibregl-ctrl-top-right .maplibregl-ctrl-compass {
+  background-color: rgba(8,12,28,0.9) !important;
+  border-color: rgba(255,255,255,0.15) !important;
+}
+
+/* ── Counter ── */
+#counter {
+  position: fixed; bottom: 22px; left: 22px;
+  background: rgba(5,10,25,0.88);
+  border: 1px solid rgba(255,255,255,0.13);
+  backdrop-filter: blur(12px);
+  color: #d1d5db; padding: 9px 16px; border-radius: 10px;
+  font-size: 0.82em; letter-spacing: 0.01em; z-index: 1000; pointer-events: none;
+}
+#counter b { color: #60a5fa; }
+
+/* ── Legend ── */
+#legend {
+  position: fixed; bottom: 22px; right: 22px;
+  background: rgba(5,10,25,0.88);
+  border: 1px solid rgba(255,255,255,0.13);
+  backdrop-filter: blur(12px);
+  padding: 10px 14px; border-radius: 10px;
+  font-size: 0.78em; z-index: 1000; pointer-events: none; line-height: 1;
+}
+.leg { display: flex; align-items: center; gap: 8px; margin: 5px 0; color: #d1d5db; }
+.leg-dot { width: 11px; height: 11px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.45); flex-shrink: 0; }
+
+/* ── Popup ── */
+#popup {
+  position: fixed; top: 20px; right: 20px;
+  width: 300px; max-height: calc(100vh - 40px);
+  background: rgba(8,12,28,0.96);
+  border: 1px solid rgba(255,255,255,0.14);
+  backdrop-filter: blur(16px);
+  border-radius: 14px; color: #e5e7eb; z-index: 2000;
+  display: none; flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+  overflow: hidden; animation: popIn 0.16s ease;
+}
+@keyframes popIn {
+  from { opacity:0; transform: translateX(12px) scale(0.98); }
+  to   { opacity:1; transform: translateX(0) scale(1); }
+}
+.ph {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+  flex-shrink: 0;
+}
+.ph-name { font-size: 0.88em; font-weight: 700; color: #f9fafb; line-height: 1.35; word-break: break-word; }
+.ph-meta { font-size: 0.74em; color: #6b7280; margin-top: 4px; }
+.ph-avg  { font-weight: 600; }
+.px { background: none; border: none; color: #6b7280; cursor: pointer; font-size: 1.1em; padding: 0; flex-shrink: 0; line-height: 1; }
+.px:hover { color: #e5e7eb; }
+.pr { overflow-y: auto; flex: 1; }
+.pr::-webkit-scrollbar { width: 3px; }
+.pr::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+.rr {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.rr:last-child { border-bottom: none; }
+.rd { font-size: 0.78em; color: #6b7280; }
+.rs { font-size: 1em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sg { color: #4ade80; }
+.sy { color: #facc15; }
+.sr { color: #f87171; }
+
+/* ── Course markers ── */
+.cmarker {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 3px 8px rgba(0,0,0,0.6);
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.cmarker:hover {
+  transform: scale(1.55);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.6), 0 4px 12px rgba(0,0,0,0.7);
+}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="counter">
+  <b id="n-rounds">—</b> rounds across <b id="n-courses">—</b> courses plotted
+</div>
+
+<div id="legend">
+  <div class="leg"><div class="leg-dot" style="background:#4ade80"></div>Avg &lt; 80</div>
+  <div class="leg"><div class="leg-dot" style="background:#facc15"></div>Avg 80 – 89</div>
+  <div class="leg"><div class="leg-dot" style="background:#f87171"></div>Avg 90+</div>
+</div>
+
+<div id="popup"></div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="data.js"></script>
+<script>
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(s) { const p = s.split('/'); return `${MONTHS[+p[0]-1]} ${p[2]||p[1]}`; }
+function pinColor(avg) { return avg < 80 ? '#4ade80' : avg < 90 ? '#facc15' : '#f87171'; }
+function scoreClass(s) { return s < 80 ? 'sg' : s < 90 ? 'sy' : 'sr'; }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Aggregate by course ───────────────────────────────────────────────────────
+const raw = window.GOLF_DATA || [];
+const byName = {};
+raw.forEach(r => {
+  if (r.course_name === 'Other' || r.lat === null) return;
+  if (!byName[r.course_name]) byName[r.course_name] = { name: r.course_name, lat: r.lat, lng: r.lon, rounds: [] };
+  byName[r.course_name].rounds.push({ date: r.date, score: r.score });
+});
+
+const locations = Object.values(byName).map(d => {
+  d.rounds.sort((a,b) => {
+    const pa = a.date.split('/'), pb = b.date.split('/');
+    const ya = +(pa[2]||pa[1]), yb = +(pb[2]||pb[1]);
+    return ya !== yb ? yb-ya : +pb[0]-+pa[0];
+  });
+  d.avg = d.rounds.reduce((s,r) => s+r.score, 0) / d.rounds.length;
+  d.color = pinColor(d.avg);
+  return d;
+});
+
+document.getElementById('n-rounds').textContent  = raw.filter(r => r.course_name !== 'Other' && r.lat !== null).length;
+document.getElementById('n-courses').textContent = locations.length;
+
+// ── Popup ─────────────────────────────────────────────────────────────────────
+function showPopup(d) {
+  const el = document.getElementById('popup');
+  const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${d.color};margin-right:6px;vertical-align:middle"></span>`;
+  el.innerHTML = `
+    <div class="ph">
+      <div style="min-width:0">
+        <div class="ph-name">${dot}${esc(d.name)}</div>
+        <div class="ph-meta">${d.rounds.length} round${d.rounds.length!==1?'s':''} &nbsp;·&nbsp; <span class="ph-avg" style="color:${d.color}">Avg ${d.avg.toFixed(1)}</span></div>
+      </div>
+      <button class="px" id="btn-close">✕</button>
+    </div>
+    <div class="pr">${d.rounds.map(r=>`
+      <div class="rr">
+        <span class="rd">${fmtDate(r.date)}</span>
+        <span class="rs ${scoreClass(r.score)}">${r.score}</span>
+      </div>`).join('')}
+    </div>`;
+  el.style.display = 'flex';
+  document.getElementById('btn-close').onclick = () => el.style.display = 'none';
+}
+
+// ── Map ───────────────────────────────────────────────────────────────────────
+const map = new maplibregl.Map({
+  container: 'map',
+  style: 'https://tiles.openfreemap.org/styles/liberty',
+  projection: 'globe',
+  center: [-78, 38],
+  zoom: 3,
+  attributionControl: false
+});
+
+// Close popup on map click
+map.on('click', () => { document.getElementById('popup').style.display = 'none'; });
+
+// ── Auto-rotate ───────────────────────────────────────────────────────────────
+let spinning = true;
+let spinId;
+
+function spinGlobe() {
+  if (!spinning) return;
+  const c = map.getCenter();
+  map.setCenter([c.lng - 0.06, c.lat]);
+  spinId = requestAnimationFrame(spinGlobe);
+}
+
+map.on('load', () => {
+  spinGlobe();
+
+  // Add markers once map is ready
+  locations.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cmarker';
+    el.style.background = d.color;
+    el.title = d.name;
+
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      showPopup(d);
+    });
+
+    new maplibregl.Marker({ element: el, anchor: 'center' })
+      .setLngLat([d.lng, d.lat])
+      .addTo(map);
+  });
+});
+
+// Stop spinning on first user interaction
+['mousedown','touchstart','wheel'].forEach(evt => {
+  map.getCanvas().addEventListener(evt, () => {
+    spinning = false;
+    cancelAnimationFrame(spinId);
+  }, { once: true, passive: true });
+});
+</script>
+</body>
+</html>
