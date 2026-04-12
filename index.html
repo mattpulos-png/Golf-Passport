@@ -127,14 +127,16 @@ function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 
 // ── Aggregate by course ───────────────────────────────────────────────────────
 const raw = window.GOLF_DATA || [];
-const byName = {};
+// Group by coordinates — courses with identical lat/lon become one marker
+const byCoord = {};
 raw.forEach(r => {
   if (r.course_name === 'Other' || r.lat === null) return;
-  if (!byName[r.course_name]) byName[r.course_name] = { name: r.course_name, lat: r.lat, lng: r.lon, rounds: [] };
-  byName[r.course_name].rounds.push({ date: r.date, score: r.score });
+  const key = `${r.lat},${r.lon}`;
+  if (!byCoord[key]) byCoord[key] = { name: r.course_name, lat: r.lat, lng: r.lon, rounds: [] };
+  byCoord[key].rounds.push({ date: r.date, score: r.score, course: r.course_name });
 });
 
-const locations = Object.values(byName).map(d => {
+const locations = Object.values(byCoord).map(d => {
   d.rounds.sort((a,b) => {
     const pa = a.date.split('/'), pb = b.date.split('/');
     const ya = +(pa[2]||pa[1]), yb = +(pb[2]||pb[1]);
@@ -162,7 +164,7 @@ function showPopup(d) {
     </div>
     <div class="pr">${d.rounds.map(r=>`
       <div class="rr">
-        <span class="rd">${fmtDate(r.date)}</span>
+        <span class="rd">${fmtDate(r.date)}${r.course !== d.name ? `<br><span style="font-size:0.85em;opacity:0.6">${esc(r.course)}</span>` : ''}</span>
         <span class="rs ${scoreClass(r.score)}">${r.score}</span>
       </div>`).join('')}
     </div>`;
