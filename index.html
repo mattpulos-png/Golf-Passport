@@ -260,6 +260,39 @@ body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); }
   font-variant-numeric: tabular-nums;
 }
 
+/* top 100 section */
+.t100-count {
+  color: var(--accent); font-weight: 800;
+  font-size: 1.1em; font-variant-numeric: tabular-nums;
+}
+.t100-entry {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer; transition: background 0.12s;
+}
+.t100-entry:last-child { border-bottom: none; }
+.t100-entry:hover { background: rgba(255,255,255,0.04); }
+.t100-top { display: flex; align-items: center; gap: 10px; }
+.t100-rank {
+  font-size: 0.7em; font-weight: 900;
+  min-width: 28px; text-align: center;
+  padding: 3px 5px; border-radius: 5px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0; line-height: 1;
+}
+.t100-elite {
+  background: rgba(251,191,36,0.15); color: var(--amber);
+  border: 1px solid rgba(251,191,36,0.3);
+}
+.t100-ranked {
+  background: rgba(56,189,248,0.1); color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.2);
+}
+.t100-info { flex: 1; min-width: 0; }
+.t100-name { font-size: 0.78em; font-weight: 700; color: var(--text-1); line-height: 1.3; }
+.t100-list { font-size: 0.58em; font-weight: 600; color: var(--text-3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+.t100-scores { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; padding-left: 38px; }
+
 /* ── Course markers ── */
 .cmarker {
   width: 14px; height: 14px; border-radius: 50%;
@@ -315,6 +348,14 @@ body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); }
 
     <div class="pp-details" id="pp-details"></div>
 
+    <div id="pp-top100-section" style="display:none; border-bottom: 1px solid var(--border);">
+      <div class="pp-section-header" style="display:flex;justify-content:space-between;align-items:center;padding-right:16px;">
+        <span>Top 100 Courses Played</span>
+        <span class="t100-count" id="pp-top100-count"></span>
+      </div>
+      <div id="pp-top100"></div>
+    </div>
+
     <div class="pp-section-header">States Played</div>
     <div class="pp-badge-row" id="pp-state-badges"></div>
 
@@ -356,6 +397,54 @@ const STATE_LABELS = {
   CA:'California', HI:'Hawaii', AZ:'Arizona'
 };
 const STATE_ORDER = ['PA','DE','NJ','NY','NC','SC','FL','AZ','CA','HI'];
+
+// ── Top 100 course lists (from top100golfcourses.com) ─────────────────────────
+// Format: [rank, list, name]  list: "US" or "GBI" (Great Britain & Ireland)
+const TOP_100 = [
+  [1,"GBI","Royal County Down (Championship)"],[2,"GBI","St Andrews (Old Course)"],[3,"GBI","Royal Portrush (Dunluce)"],[4,"GBI","Muirfield"],[5,"GBI","Turnberry (Ailsa)"],[6,"GBI","Royal Dornoch (Championship)"],[7,"GBI","Royal St George's"],[8,"GBI","Sunningdale (Old)"],[9,"GBI","Ballybunion (Old)"],[10,"GBI","Lahinch (Old)"],
+  [11,"GBI","Carnoustie (Championship)"],[12,"GBI","Rosapenna (St Patrick's Links)"],[13,"GBI","Sunningdale (New)"],[14,"GBI","North Berwick (West Links)"],[15,"GBI","Kingsbarns"],[16,"GBI","Ardfin"],[17,"GBI","St Enodoc (Church)"],[18,"GBI","Swinley Forest"],[19,"GBI","Castle Stuart"],[20,"GBI","Royal Lytham & St Annes"],
+  [21,"GBI","Royal Porthcawl"],[22,"GBI","Cruden Bay"],[23,"GBI","Ganton"],[24,"GBI","Portmarnock"],[25,"GBI","Trump International (Aberdeen)"],[26,"GBI","Royal Birkdale"],[27,"GBI","St George's Hill"],[28,"GBI","Royal Aberdeen"],[29,"GBI","Royal Cinque Ports"],[30,"GBI","Prestwick"],
+  [31,"GBI","West Sussex"],[32,"GBI","Rye (Old)"],[33,"GBI","Woodhall Spa (Hotchkin)"],[34,"GBI","Royal Troon (Old)"],[35,"GBI","Royal West Norfolk"],[36,"GBI","Walton Heath (Old)"],[37,"GBI","Machrihanish (Championship)"],[38,"GBI","Royal Liverpool"],[39,"GBI","Gleneagles (King's)"],[40,"GBI","Loch Lomond"],
+  [41,"GBI","Alwoodley"],[42,"GBI","Western Gailes"],[43,"GBI","Hollinwell"],[44,"GBI","Waterville"],[45,"GBI","Dumbarnie Links"],[46,"GBI","Silloth on Solway"],[47,"GBI","The Island"],[48,"GBI","Berkshire (Red)"],[49,"GBI","County Louth"],[50,"GBI","Hillside"],
+  [51,"GBI","Formby"],[52,"GBI","Saunton (East)"],[53,"GBI","Nairn (Championship)"],[54,"GBI","Wentworth (West)"],[55,"GBI","Hankley Common"],[56,"GBI","County Sligo"],[57,"GBI","Trump International (Doonbeg)"],[58,"GBI","Machrie"],[59,"GBI","Adare Manor"],[60,"GBI","Gullane No.1"],
+  [61,"GBI","Burnham & Berrow"],[62,"GBI","Carne (Wild Atlantic Dunes)"],[63,"GBI","Ballyliffin (Glashedy)"],[64,"GBI","Rosapenna (Sandy Hills)"],[65,"GBI","Woking"],[66,"GBI","Tralee"],[67,"GBI","Queenwood"],[68,"GBI","Hunstanton"],[69,"GBI","Enniscrone (Dunes)"],[70,"GBI","Liphook"],
+  [71,"GBI","Worplesdon"],[72,"GBI","Skibo Castle (Carnegie Links)"],[73,"GBI","Renaissance Club"],[74,"GBI","Old Head"],[75,"GBI","Portstewart (Strand)"],[76,"GBI","West Hill"],[77,"GBI","Narin & Portnoo"],[78,"GBI","Pennard"],[79,"GBI","Gleneagles (Queen's)"],[80,"GBI","Royal St David's"],
+  [81,"GBI","Machrihanish Dunes"],[82,"GBI","Parkstone"],[83,"GBI","Berkshire (Blue)"],[84,"GBI","Aberdovey"],[85,"GBI","West Lancashire"],[86,"GBI","Prince's"],[87,"GBI","The Addington"],[88,"GBI","Broadstone"],[89,"GBI","JCB Golf & Country Club"],[90,"GBI","Hindhead"],
+  [91,"GBI","Walton Heath (New)"],[92,"GBI","Castletown"],[93,"GBI","Delamere Forest"],[94,"GBI","Southport & Ainsdale"],[95,"GBI","Moortown"],[96,"GBI","Wallasey"],[97,"GBI","Royal Dublin"],[98,"GBI","Brora"],[99,"GBI","St Andrews (New)"],
+  [1,"US","Cypress Point Club"],[2,"US","Pine Valley Golf Club"],[3,"US","Shinnecock Hills Golf Club"],[4,"US","National Golf Links of America"],[5,"US","Oakmont Country Club"],[6,"US","Sand Hills Golf Club"],[7,"US","Merion Golf Club (East)"],[8,"US","Augusta National Golf Club"],[9,"US","Los Angeles Country Club (North)"],[10,"US","Fishers Island Club"],
+  [11,"US","Friar's Head"],[12,"US","Chicago Golf Club"],[13,"US","Pacific Dunes"],[14,"US","Pebble Beach Golf Links"],[15,"US","Prairie Dunes Country Club"],[16,"US","Riviera Country Club"],[17,"US","Crystal Downs Country Club"],[18,"US","Winged Foot Golf Club (West)"],[19,"US","California Golf Club of San Francisco"],[20,"US","Old Town Club"],
+  [21,"US","San Francisco Golf Club"],[22,"US","Somerset Hills Country Club"],[23,"US","Oakland Hills Country Club (South)"],[24,"US","Camargo Club"],[25,"US","Shoreacres"],[26,"US","CapRock Ranch"],[27,"US","Seminole Golf Club"],[28,"US","Bethpage Black"],[29,"US","Pinehurst No. 2"],[30,"US","Oak Hill Country Club (East)"],
+  [31,"US","The Lido (Sand Valley)"],[32,"US","Maidstone Club"],[33,"US","Sleepy Hollow Country Club (Upper)"],[34,"US","Myopia Hunt Club"],[35,"US","Eastward Ho!"],[36,"US","Garden City Golf Club"],[37,"US","Ballyneal Golf Club"],[38,"US","Bandon Trails"],[39,"US","Bandon Dunes"],[40,"US","Inverness Club"],
+  [41,"US","Rock Creek Cattle Company"],[42,"US","Whistling Straits (Straits)"],[43,"US","Peachtree"],[44,"US","Baltusrol Golf Club (Lower)"],[45,"US","Kiawah Island (Ocean)"],[46,"US","The Country Club (Clyde & Squirrel)"],[47,"US","Old Barnwell"],[48,"US","Old Sandwich Golf Club"],[49,"US","Essex County Club"],[50,"US","Winged Foot Golf Club (East)"],
+  [51,"US","Yeamans Hall Club"],[52,"US","Wade Hampton Golf Club"],[53,"US","Southern Hills Country Club"],[54,"US","Ohoopee Match Club"],[55,"US","The Golf Club"],[56,"US","Quaker Ridge Golf Club"],[57,"US","Piping Rock Club"],[58,"US","Gozzer Ranch Golf & Lake Club"],[59,"US","Shadow Creek"],[60,"US","Scioto Country Club"],
+  [61,"US","Muirfield Village Golf Club"],[62,"US","Plainfield Country Club"],[63,"US","Pasatiempo Golf Club"],[64,"US","White Bear Yacht Club"],[65,"US","Monterey Peninsula (Dunes)"],[66,"US","TPC Sawgrass (Stadium)"],[67,"US","Valley Club of Montecito"],[68,"US","Kittansett Club"],[69,"US","Boston Golf Club"],[70,"US","Baltimore Country Club (East)"],
+  [71,"US","Milwaukee Country Club"],[72,"US","Lawsonia (Links)"],[73,"US","Olympic Club (Lake)"],[74,"US","Nanea Golf Club"],[75,"US","Sand Valley"],[76,"US","Victoria National Golf Club"],[77,"US","Congaree Golf Club"],[78,"US","The Creek"],[79,"US","Calusa Pines Golf Club"],[80,"US","St Louis Country Club"],
+  [81,"US","Ridgewood Country Club (East & West)"],[82,"US","Bel-Air Country Club"],[83,"US","Ladera Golf Club"],[84,"US","The Honors Course"],[85,"US","Colorado Golf Club"],[86,"US","Kingsley Club"],[87,"US","Pikewood National Golf Club"],[88,"US","The Tree Farm"],[89,"US","Lake Merced Golf Club"],[90,"US","Old Elm Club"],
+  [91,"US","Congressional Country Club (Blue)"],[92,"US","Scottsdale National (Other Course)"],[93,"US","Moraine Country Club"],[94,"US","Lost Rail Golf Club"],[95,"US","Streamsong Red"],[96,"US","Chambers Bay"],[97,"US","Fox Chapel Golf Club"],[98,"US","Sedge Valley"],[99,"US","Medinah Country Club (No. 3)"],[100,"US","Old Macdonald"]
+];
+
+// Fuzzy name matching for top 100 cross-reference
+function normName(s) {
+  return s.toLowerCase()
+    .replace(/[()]/g, '').replace(/[-]/g, ' ')
+    .replace(/\bgolf\s*(club|course|links|resort)?\b/g, '')
+    .replace(/\bcountry\s*club\b/g, '')
+    .replace(/\bstate\s*park\b/g, '')
+    .replace(/\bresort\b/g, '')
+    .replace(/[,&|]/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+function matchScore(a, b) {
+  if (a === b) return 1;
+  if (a.includes(b) || b.includes(a)) return 0.95;
+  const aw = a.split(' ').filter(w => w.length > 1);
+  const bw = b.split(' ').filter(w => w.length > 1);
+  let hits = 0;
+  for (const w of aw) {
+    if (bw.some(x => x.startsWith(w) || w.startsWith(x))) hits++;
+  }
+  return aw.length > 0 ? hits / aw.length : 0;
+}
 
 // ── Aggregate by course ───────────────────────────────────────────────────────
 const raw = window.GOLF_DATA || [];
@@ -431,6 +520,62 @@ function buildPassport() {
         <div class="pp-row-sub">${esc(mostPlayed.name)}</div>
       </div>
     </div>`;
+
+  // Top 100 matching — check each location against the top 100 list
+  const top100Matches = [];
+  locations.forEach(loc => {
+    const isUSA = loc.region.country === 'USA';
+    const isGBI = loc.region.country === 'Scotland' || loc.region.country === 'England';
+    if (!isUSA && !isGBI) return;
+    const listFilter = isUSA ? 'US' : 'GBI';
+    // Collect all course name variants at this location
+    const nameVariants = new Set([loc.name, ...loc.rounds.map(r => r.course)]);
+    const normVariants = [...nameVariants].map(n => normName(n));
+    for (const entry of TOP_100) {
+      if (entry[1] !== listFilter) continue;
+      const normTop = normName(entry[2]);
+      const best = Math.max(...normVariants.map(nv => matchScore(normTop, nv)));
+      if (best >= 0.7) {
+        top100Matches.push({ rank: entry[0], list: entry[1], t100Name: entry[2], loc });
+        break;
+      }
+    }
+  });
+  top100Matches.sort((a,b) => {
+    if (a.list !== b.list) return a.list === 'US' ? -1 : 1;
+    return a.rank - b.rank;
+  });
+
+  // Populate top 100 section
+  const t100Section = document.getElementById('pp-top100-section');
+  if (top100Matches.length > 0) {
+    t100Section.style.display = 'block';
+    document.getElementById('pp-top100-count').textContent = top100Matches.length;
+    document.getElementById('pp-top100').innerHTML = top100Matches.map((m, i) => {
+      const d = m.loc;
+      const rankClass = m.rank <= 10 ? 't100-elite' : 't100-ranked';
+      const listLabel = m.list === 'US' ? 'United States Top 100' : 'Great Britain & Ireland Top 100';
+      return `<div class="t100-entry" data-t100-idx="${i}">
+        <div class="t100-top">
+          <span class="t100-rank ${rankClass}">#${m.rank}</span>
+          <div class="t100-info">
+            <div class="t100-name">${esc(m.t100Name)}</div>
+            <div class="t100-list">${listLabel}</div>
+          </div>
+        </div>
+        <div class="t100-scores">${d.rounds.map(r =>
+          `<span class="rc-score ${scoreClass(r.score)}">${r.score}</span>`
+        ).join('')}</div>
+      </div>`;
+    }).join('');
+
+    // Click to drill into course detail
+    document.getElementById('pp-top100').querySelectorAll('.t100-entry').forEach(row => {
+      row.addEventListener('click', () => {
+        showPopup(top100Matches[+row.dataset.t100Idx].loc);
+      });
+    });
+  }
 
   // State badges (clickable)
   const orderedStates = STATE_ORDER.filter(s => stateSet.has(s));
