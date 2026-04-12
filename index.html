@@ -3,13 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Golf Passport ⛳</title>
+<title>Golf Passport</title>
 
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <style>
+:root {
+  --bg-deep:    #060812;
+  --bg-panel:   rgba(8,12,26,0.97);
+  --bg-card:    rgba(255,255,255,0.035);
+  --border:     rgba(255,255,255,0.07);
+  --border-hi:  rgba(255,255,255,0.12);
+  --accent:     #38bdf8;   /* Flighty sky-blue */
+  --accent-dim: rgba(56,189,248,0.15);
+  --green:      #34d399;
+  --amber:      #fbbf24;
+  --rose:       #f87171;
+  --text-1:     #f1f5f9;
+  --text-2:     #94a3b8;
+  --text-3:     #475569;
+  --font:       'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #000; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif; }
+body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); }
 #map { width: 100vw; height: 100vh; }
 
 /* ── MapLibre overrides ── */
@@ -18,85 +36,213 @@ body { background: #000; overflow: hidden; font-family: -apple-system, BlinkMacS
 .maplibregl-ctrl-top-right .maplibregl-ctrl-zoom-in,
 .maplibregl-ctrl-top-right .maplibregl-ctrl-zoom-out,
 .maplibregl-ctrl-top-right .maplibregl-ctrl-compass {
-  background-color: rgba(8,12,28,0.9) !important;
-  border-color: rgba(255,255,255,0.15) !important;
+  background-color: var(--bg-panel) !important;
+  border-color: var(--border) !important;
 }
 
-/* ── Counter ── */
+/* ── Counter pill ── */
 #counter {
-  position: fixed; bottom: 22px; left: 22px;
-  background: rgba(5,10,25,0.88);
-  border: 1px solid rgba(255,255,255,0.13);
-  backdrop-filter: blur(12px);
-  color: #d1d5db; padding: 9px 16px; border-radius: 10px;
-  font-size: 0.82em; letter-spacing: 0.01em; z-index: 1000; pointer-events: none;
+  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  color: var(--text-2); padding: 10px 20px; border-radius: 40px;
+  font-size: 0.78em; font-weight: 500; letter-spacing: 0.02em;
+  z-index: 1000; cursor: pointer; user-select: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  display: flex; align-items: center; gap: 14px;
 }
-#counter b { color: #60a5fa; }
+#counter:hover {
+  border-color: rgba(56,189,248,0.35);
+  box-shadow: 0 0 20px rgba(56,189,248,0.08);
+}
+#counter .sep { width: 1px; height: 14px; background: var(--border-hi); flex-shrink: 0; }
+#counter .num { color: var(--text-1); font-weight: 700; }
+#counter .cta { color: var(--accent); font-weight: 600; }
 
 /* ── Legend ── */
 #legend {
   position: fixed; bottom: 22px; right: 22px;
-  background: rgba(5,10,25,0.88);
-  border: 1px solid rgba(255,255,255,0.13);
-  backdrop-filter: blur(12px);
-  padding: 10px 14px; border-radius: 10px;
-  font-size: 0.78em; z-index: 1000; pointer-events: none; line-height: 1;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  padding: 10px 14px; border-radius: 12px;
+  font-size: 0.72em; z-index: 1000; pointer-events: none; line-height: 1;
 }
-.leg { display: flex; align-items: center; gap: 8px; margin: 5px 0; color: #d1d5db; }
-.leg-dot { width: 11px; height: 11px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.45); flex-shrink: 0; }
+.leg { display: flex; align-items: center; gap: 8px; margin: 5px 0; color: var(--text-2); }
+.leg-dot { width: 9px; height: 9px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); flex-shrink: 0; }
 
-/* ── Popup ── */
+/* ── Shared panel styles ── */
+.panel-close {
+  background: none; border: none; color: var(--text-3); cursor: pointer;
+  font-size: 0.85em; padding: 4px; line-height: 1; border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.panel-close:hover { color: var(--text-1); background: rgba(255,255,255,0.06); }
+
+/* ── Course popup ── */
 #popup {
   position: fixed; top: 20px; right: 20px;
   width: 300px; max-height: calc(100vh - 40px);
-  background: rgba(8,12,28,0.96);
-  border: 1px solid rgba(255,255,255,0.14);
-  backdrop-filter: blur(16px);
-  border-radius: 14px; color: #e5e7eb; z-index: 2000;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  border-radius: 16px; color: var(--text-1); z-index: 2000;
   display: none; flex-direction: column;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.7);
-  overflow: hidden; animation: popIn 0.16s ease;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  overflow: hidden; animation: slideRight 0.18s ease;
 }
-@keyframes popIn {
-  from { opacity:0; transform: translateX(12px) scale(0.98); }
-  to   { opacity:1; transform: translateX(0) scale(1); }
+@keyframes slideRight {
+  from { opacity:0; transform: translateX(10px); }
+  to   { opacity:1; transform: translateX(0); }
 }
 .ph {
-  padding: 14px 16px 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 16px 16px 14px;
+  border-bottom: 1px solid var(--border);
   display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
   flex-shrink: 0;
 }
-.ph-name { font-size: 0.88em; font-weight: 700; color: #f9fafb; line-height: 1.35; word-break: break-word; }
-.ph-meta { font-size: 0.74em; color: #6b7280; margin-top: 4px; }
-.ph-avg  { font-weight: 600; }
-.px { background: none; border: none; color: #6b7280; cursor: pointer; font-size: 1.1em; padding: 0; flex-shrink: 0; line-height: 1; }
-.px:hover { color: #e5e7eb; }
+.ph-name { font-size: 0.88em; font-weight: 700; color: var(--text-1); line-height: 1.35; word-break: break-word; }
+.ph-meta { font-size: 0.72em; color: var(--text-3); margin-top: 5px; font-weight: 500; }
+.ph-avg  { font-weight: 700; }
 .pr { overflow-y: auto; flex: 1; }
 .pr::-webkit-scrollbar { width: 3px; }
-.pr::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+.pr::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
 .rr {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 7px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 8px 16px; border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 .rr:last-child { border-bottom: none; }
-.rd { font-size: 0.78em; color: #6b7280; }
-.rs { font-size: 1em; font-weight: 700; font-variant-numeric: tabular-nums; }
-.sg { color: #4ade80; }
-.sy { color: #facc15; }
-.sr { color: #f87171; }
+.rd { font-size: 0.75em; color: var(--text-3); font-weight: 500; }
+.rs { font-size: 1.05em; font-weight: 800; font-variant-numeric: tabular-nums; }
+.sg { color: var(--green); }
+.sy { color: var(--amber); }
+.sr { color: var(--rose); }
+
+/* ── Passport panel ── */
+#passport {
+  position: fixed; top: 20px; left: 20px;
+  width: 300px; max-height: calc(100vh - 40px);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  border-radius: 16px; color: var(--text-1); z-index: 2001;
+  display: none; flex-direction: column;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.65);
+  overflow: hidden;
+  animation: slideLeft 0.2s ease;
+}
+@keyframes slideLeft {
+  from { opacity:0; transform: translateX(-10px); }
+  to   { opacity:1; transform: translateX(0); }
+}
+
+.pp-header {
+  padding: 18px 16px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: flex-start;
+  flex-shrink: 0;
+}
+.pp-brand { display: flex; flex-direction: column; gap: 2px; }
+.pp-title {
+  font-size: 0.7em; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--accent);
+}
+.pp-name {
+  font-size: 1.15em; font-weight: 800; color: var(--text-1);
+  margin-top: 2px;
+}
+.pp-years {
+  font-size: 0.68em; font-weight: 500; color: var(--text-3);
+  letter-spacing: 0.06em; margin-top: 1px;
+}
+
+.pp-body { overflow-y: auto; flex: 1; padding: 0; }
+.pp-body::-webkit-scrollbar { width: 3px; }
+.pp-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+/* stat grid */
+.stat-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.stat-cell {
+  background: var(--bg-panel);
+  padding: 14px 16px;
+}
+.stat-num {
+  font-size: 2em; font-weight: 900; font-variant-numeric: tabular-nums;
+  color: var(--text-1); line-height: 1; letter-spacing: -0.02em;
+}
+.stat-label {
+  font-size: 0.6em; font-weight: 600; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px;
+}
+
+/* detail rows */
+.pp-details { padding: 4px 0; border-bottom: 1px solid var(--border); }
+.pp-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 16px;
+}
+.pp-row-label { font-size: 0.72em; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.pp-row-right { text-align: right; }
+.pp-row-val { font-size: 0.92em; font-weight: 800; color: var(--text-1); font-variant-numeric: tabular-nums; }
+.pp-row-sub { font-size: 0.62em; font-weight: 500; color: var(--text-3); margin-top: 1px; }
+
+/* best round highlight */
+.pp-best {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px;
+}
+.pp-best-score {
+  font-size: 2.4em; font-weight: 900; line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.pp-best-info { flex: 1; }
+.pp-best-label { font-size: 0.6em; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em; }
+.pp-best-course { font-size: 0.78em; font-weight: 600; color: var(--text-2); margin-top: 3px; }
+.pp-best-date { font-size: 0.65em; font-weight: 500; color: var(--text-3); margin-top: 1px; }
+
+/* sections */
+.pp-section-header {
+  font-size: 0.6em; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-3);
+  padding: 12px 16px 6px;
+}
+.pp-badge-row {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  padding: 0 16px 14px;
+}
+
+.badge {
+  font-size: 0.65em; font-weight: 700; letter-spacing: 0.04em;
+  padding: 4px 9px; border-radius: 6px;
+  border: 1px solid;
+}
+.badge-us {
+  background: rgba(56,189,248,0.08); color: var(--accent);
+  border-color: rgba(56,189,248,0.18);
+}
+.badge-intl {
+  background: rgba(251,191,36,0.08); color: var(--amber);
+  border-color: rgba(251,191,36,0.18);
+}
 
 /* ── Course markers ── */
 .cmarker {
-  width: 16px; height: 16px; border-radius: 50%;
-  border: 2.5px solid #fff;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 3px 8px rgba(0,0,0,0.6);
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.85);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.5);
   cursor: pointer;
   transition: transform 0.12s, box-shadow 0.12s;
 }
 .cmarker:hover {
-  transform: scale(1.55);
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.6), 0 4px 12px rgba(0,0,0,0.7);
+  transform: scale(1.6);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.6), 0 4px 14px rgba(0,0,0,0.6);
 }
 </style>
 </head>
@@ -104,30 +250,87 @@ body { background: #000; overflow: hidden; font-family: -apple-system, BlinkMacS
 
 <div id="map"></div>
 
-<div id="counter">
-  <b id="n-rounds">—</b> rounds across <b id="n-courses">—</b> courses plotted
+<div id="counter" title="View your Golf Passport">
+  <span><span class="num" id="n-rounds">—</span> rounds</span>
+  <span class="sep"></span>
+  <span><span class="num" id="n-courses">—</span> courses</span>
+  <span class="sep"></span>
+  <span class="cta">Passport</span>
 </div>
 
 <div id="legend">
-  <div class="leg"><div class="leg-dot" style="background:#4ade80"></div>Avg &lt; 80</div>
-  <div class="leg"><div class="leg-dot" style="background:#facc15"></div>Avg 80 – 89</div>
-  <div class="leg"><div class="leg-dot" style="background:#f87171"></div>Avg 90+</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Avg &lt; 80</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--amber)"></div>Avg 80 – 89</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--rose)"></div>Avg 90+</div>
 </div>
 
 <div id="popup"></div>
+
+<div id="passport">
+  <div class="pp-header">
+    <div class="pp-brand">
+      <div class="pp-title">Golf Passport</div>
+      <div class="pp-name" id="pp-name">Matt Pulos</div>
+      <div class="pp-years" id="pp-years">2008 – 2025</div>
+    </div>
+    <button class="panel-close" id="pp-close">✕</button>
+  </div>
+  <div class="pp-body">
+    <div class="stat-grid">
+      <div class="stat-cell"><div class="stat-num" id="pp-rounds">—</div><div class="stat-label">Rounds</div></div>
+      <div class="stat-cell"><div class="stat-num" id="pp-courses">—</div><div class="stat-label">Courses</div></div>
+      <div class="stat-cell"><div class="stat-num" id="pp-states">—</div><div class="stat-label">States</div></div>
+      <div class="stat-cell"><div class="stat-num" id="pp-countries">—</div><div class="stat-label">Countries</div></div>
+    </div>
+
+    <div class="pp-best" id="pp-best"></div>
+
+    <div class="pp-details" id="pp-details"></div>
+
+    <div class="pp-section-header">States Played</div>
+    <div class="pp-badge-row" id="pp-state-badges"></div>
+
+    <div class="pp-section-header">Countries Played</div>
+    <div class="pp-badge-row" id="pp-country-badges"></div>
+  </div>
+</div>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="data.js"></script>
 <script>
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fmtDate(s) { const p = s.split('/'); return `${MONTHS[+p[0]-1]} ${p[2]||p[1]}`; }
-function pinColor(avg) { return avg < 80 ? '#4ade80' : avg < 90 ? '#facc15' : '#f87171'; }
+function fmtYear(s) { const p = s.split('/'); return +(p[2]||p[1]); }
+function pinColor(avg) { return avg < 80 ? '#34d399' : avg < 90 ? '#fbbf24' : '#f87171'; }
 function scoreClass(s) { return s < 80 ? 'sg' : s < 90 ? 'sy' : 'sr'; }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+// ── Region inference from lat/lon ─────────────────────────────────────────────
+function inferRegion(lat, lon) {
+  if (lat > 54)                                        return { country: 'Scotland',  state: null };
+  if (lat > 49)                                        return { country: 'England',   state: null };
+  if (lat < 23 && lon < -150)                          return { country: 'USA', state: 'HI' };
+  if (lon < -115)                                      return { country: 'USA', state: 'CA' };
+  if (lon < -109 && lat < 37)                          return { country: 'USA', state: 'AZ' };
+  if (lat < 28)                                        return { country: 'USA', state: 'FL' };
+  if (lat < 33.5 && lon < -78)                         return { country: 'USA', state: 'SC' };
+  if (lat < 37 && lon > -84)                           return { country: 'USA', state: 'NC' };
+  if (lat < 39.5 && lon > -75.8 && lon < -74.8)       return { country: 'USA', state: 'DE' };
+  if (lat > 40 && lon > -74.15)                        return { country: 'USA', state: 'NY' };
+  if (lat > 41.3 && lon > -75.2)                       return { country: 'USA', state: 'NY' };
+  if (lon > -74.97)                                    return { country: 'USA', state: 'NJ' };
+  return { country: 'USA', state: 'PA' };
+}
+
+const STATE_LABELS = {
+  PA:'Pennsylvania', NJ:'New Jersey', NY:'New York', DE:'Delaware',
+  NC:'N. Carolina', SC:'S. Carolina', FL:'Florida',
+  CA:'California', HI:'Hawaii', AZ:'Arizona'
+};
+const STATE_ORDER = ['PA','DE','NJ','NY','NC','SC','FL','AZ','CA','HI'];
+
 // ── Aggregate by course ───────────────────────────────────────────────────────
 const raw = window.GOLF_DATA || [];
-// Group by coordinates — courses with identical lat/lon become one marker
 const byCoord = {};
 raw.forEach(r => {
   if (r.course_name === 'Other' || r.lat === null) return;
@@ -147,10 +350,88 @@ const locations = Object.values(byCoord).map(d => {
   return d;
 });
 
-document.getElementById('n-rounds').textContent  = raw.filter(r => r.course_name !== 'Other' && r.lat !== null).length;
+const validRounds = raw.filter(r => r.course_name !== 'Other' && r.lat !== null);
+document.getElementById('n-rounds').textContent  = validRounds.length;
 document.getElementById('n-courses').textContent = locations.length;
 
-// ── Popup ─────────────────────────────────────────────────────────────────────
+// ── Passport stats ────────────────────────────────────────────────────────────
+const stateSet   = new Set();
+const countrySet = new Set();
+locations.forEach(d => {
+  const reg = inferRegion(d.lat, d.lng);
+  if (reg.state) stateSet.add(reg.state);
+  countrySet.add(reg.country);
+});
+
+const bestRound  = validRounds.reduce((b, r) => r.score < b.score ? r : b);
+const avgScore   = (validRounds.reduce((s,r) => s+r.score, 0) / validRounds.length).toFixed(1);
+const mostPlayed = locations.reduce((a,b) => a.rounds.length > b.rounds.length ? a : b);
+const allYears   = validRounds.map(r => fmtYear(r.date));
+const firstYear  = Math.min(...allYears);
+const lastYear   = Math.max(...allYears);
+
+function buildPassport() {
+  document.getElementById('pp-rounds').textContent    = validRounds.length;
+  document.getElementById('pp-courses').textContent   = locations.length;
+  document.getElementById('pp-states').textContent    = stateSet.size;
+  document.getElementById('pp-countries').textContent = countrySet.size;
+  document.getElementById('pp-years').textContent     = `${firstYear} – ${lastYear}`;
+
+  // Best round highlight
+  const bestColor = bestRound.score < 80 ? 'var(--green)' : bestRound.score < 90 ? 'var(--amber)' : 'var(--rose)';
+  document.getElementById('pp-best').innerHTML = `
+    <div class="pp-best-score" style="color:${bestColor}">${bestRound.score}</div>
+    <div class="pp-best-info">
+      <div class="pp-best-label">Best Round</div>
+      <div class="pp-best-course">${esc(bestRound.course_name)}</div>
+      <div class="pp-best-date">${fmtDate(bestRound.date)}</div>
+    </div>`;
+
+  // Detail rows
+  document.getElementById('pp-details').innerHTML = `
+    <div class="pp-row">
+      <span class="pp-row-label">Scoring Avg</span>
+      <div class="pp-row-right">
+        <div class="pp-row-val">${avgScore}</div>
+      </div>
+    </div>
+    <div class="pp-row">
+      <span class="pp-row-label">Most Played</span>
+      <div class="pp-row-right">
+        <div class="pp-row-val">${mostPlayed.rounds.length} rounds</div>
+        <div class="pp-row-sub">${esc(mostPlayed.name)}</div>
+      </div>
+    </div>`;
+
+  // State badges
+  const orderedStates = STATE_ORDER.filter(s => stateSet.has(s));
+  const extraStates   = [...stateSet].filter(s => !STATE_ORDER.includes(s)).sort();
+  document.getElementById('pp-state-badges').innerHTML =
+    [...orderedStates, ...extraStates].map(s =>
+      `<span class="badge badge-us" title="${STATE_LABELS[s] || s}">${s}</span>`
+    ).join('');
+
+  // Country badges
+  const countryOrder = ['USA', 'England', 'Scotland'];
+  const orderedCountries = countryOrder.filter(c => countrySet.has(c));
+  const extraCountries   = [...countrySet].filter(c => !countryOrder.includes(c)).sort();
+  document.getElementById('pp-country-badges').innerHTML =
+    [...orderedCountries, ...extraCountries].map(c =>
+      `<span class="badge ${c === 'USA' ? 'badge-us' : 'badge-intl'}">${c}</span>`
+    ).join('');
+}
+
+// ── Passport toggle ───────────────────────────────────────────────────────────
+let passportBuilt = false;
+document.getElementById('counter').addEventListener('click', () => {
+  if (!passportBuilt) { buildPassport(); passportBuilt = true; }
+  document.getElementById('passport').style.display = 'flex';
+});
+document.getElementById('pp-close').addEventListener('click', () => {
+  document.getElementById('passport').style.display = 'none';
+});
+
+// ── Course popup ──────────────────────────────────────────────────────────────
 function showPopup(d) {
   const el = document.getElementById('popup');
   const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${d.color};margin-right:6px;vertical-align:middle"></span>`;
@@ -160,11 +441,11 @@ function showPopup(d) {
         <div class="ph-name">${dot}${esc(d.name)}</div>
         <div class="ph-meta">${d.rounds.length} round${d.rounds.length!==1?'s':''} &nbsp;·&nbsp; <span class="ph-avg" style="color:${d.color}">Avg ${d.avg.toFixed(1)}</span></div>
       </div>
-      <button class="px" id="btn-close">✕</button>
+      <button class="panel-close" id="btn-close">✕</button>
     </div>
     <div class="pr">${d.rounds.map(r=>`
       <div class="rr">
-        <span class="rd">${fmtDate(r.date)}${r.course !== d.name ? `<br><span style="font-size:0.85em;opacity:0.6">${esc(r.course)}</span>` : ''}</span>
+        <span class="rd">${fmtDate(r.date)}${r.course !== d.name ? `<br><span style="font-size:0.85em;opacity:0.55">${esc(r.course)}</span>` : ''}</span>
         <span class="rs ${scoreClass(r.score)}">${r.score}</span>
       </div>`).join('')}
     </div>`;
@@ -182,13 +463,11 @@ const map = new maplibregl.Map({
   attributionControl: false
 });
 
-// Close popup on map click
 map.on('click', () => { document.getElementById('popup').style.display = 'none'; });
 
 // ── Auto-rotate ───────────────────────────────────────────────────────────────
 let spinning = true;
 let spinId;
-
 function spinGlobe() {
   if (!spinning) return;
   const c = map.getCenter();
@@ -198,26 +477,18 @@ function spinGlobe() {
 
 map.on('load', () => {
   spinGlobe();
-
-  // Add markers once map is ready
   locations.forEach(d => {
     const el = document.createElement('div');
     el.className = 'cmarker';
     el.style.background = d.color;
     el.title = d.name;
-
-    el.addEventListener('click', e => {
-      e.stopPropagation();
-      showPopup(d);
-    });
-
+    el.addEventListener('click', e => { e.stopPropagation(); showPopup(d); });
     new maplibregl.Marker({ element: el, anchor: 'center' })
       .setLngLat([d.lng, d.lat])
       .addTo(map);
   });
 });
 
-// Stop spinning on first user interaction
 ['mousedown','touchstart','wheel'].forEach(evt => {
   map.getCanvas().addEventListener(evt, () => {
     spinning = false;
