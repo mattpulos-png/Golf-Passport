@@ -221,15 +221,43 @@ body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); }
 .badge {
   font-size: 0.65em; font-weight: 700; letter-spacing: 0.04em;
   padding: 4px 9px; border-radius: 6px;
-  border: 1px solid;
+  border: 1px solid; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
 }
+.badge:hover { transform: scale(1.08); }
 .badge-us {
   background: rgba(56,189,248,0.08); color: var(--accent);
   border-color: rgba(56,189,248,0.18);
 }
+.badge-us:hover, .badge-us.active {
+  background: rgba(56,189,248,0.2); border-color: rgba(56,189,248,0.45);
+}
 .badge-intl {
   background: rgba(251,191,36,0.08); color: var(--amber);
   border-color: rgba(251,191,36,0.18);
+}
+.badge-intl:hover, .badge-intl.active {
+  background: rgba(251,191,36,0.2); border-color: rgba(251,191,36,0.45);
+}
+
+/* region course list (inside popup) */
+.region-course {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.region-course:last-child { border-bottom: none; }
+.region-course:hover { background: rgba(255,255,255,0.04); }
+.rc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.rc-name { font-size: 0.8em; font-weight: 700; color: var(--text-1); line-height: 1.3; }
+.rc-avg { font-size: 0.9em; font-weight: 800; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.rc-meta { font-size: 0.66em; font-weight: 500; color: var(--text-3); margin-top: 3px; }
+.rc-scores { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.rc-score {
+  font-size: 0.62em; font-weight: 700; padding: 2px 5px;
+  border-radius: 4px; background: rgba(255,255,255,0.04);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Course markers ── */
@@ -354,11 +382,12 @@ const validRounds = raw.filter(r => r.course_name !== 'Other' && r.lat !== null)
 document.getElementById('n-rounds').textContent  = validRounds.length;
 document.getElementById('n-courses').textContent = locations.length;
 
-// ── Passport stats ────────────────────────────────────────────────────────────
+// ── Tag each location with its region ─────────────────────────────────────────
 const stateSet   = new Set();
 const countrySet = new Set();
 locations.forEach(d => {
   const reg = inferRegion(d.lat, d.lng);
+  d.region = reg;
   if (reg.state) stateSet.add(reg.state);
   countrySet.add(reg.country);
 });
@@ -403,22 +432,30 @@ function buildPassport() {
       </div>
     </div>`;
 
-  // State badges
+  // State badges (clickable)
   const orderedStates = STATE_ORDER.filter(s => stateSet.has(s));
   const extraStates   = [...stateSet].filter(s => !STATE_ORDER.includes(s)).sort();
-  document.getElementById('pp-state-badges').innerHTML =
+  const stBadgeEl = document.getElementById('pp-state-badges');
+  stBadgeEl.innerHTML =
     [...orderedStates, ...extraStates].map(s =>
-      `<span class="badge badge-us" title="${STATE_LABELS[s] || s}">${s}</span>`
+      `<span class="badge badge-us" data-region-type="state" data-region-key="${s}" title="${STATE_LABELS[s] || s}">${s}</span>`
     ).join('');
+  stBadgeEl.querySelectorAll('.badge').forEach(b =>
+    b.addEventListener('click', () => showRegionPopup('state', b.dataset.regionKey))
+  );
 
-  // Country badges
+  // Country badges (clickable)
   const countryOrder = ['USA', 'England', 'Scotland'];
   const orderedCountries = countryOrder.filter(c => countrySet.has(c));
   const extraCountries   = [...countrySet].filter(c => !countryOrder.includes(c)).sort();
-  document.getElementById('pp-country-badges').innerHTML =
+  const ctBadgeEl = document.getElementById('pp-country-badges');
+  ctBadgeEl.innerHTML =
     [...orderedCountries, ...extraCountries].map(c =>
-      `<span class="badge ${c === 'USA' ? 'badge-us' : 'badge-intl'}">${c}</span>`
+      `<span class="badge ${c === 'USA' ? 'badge-us' : 'badge-intl'}" data-region-type="country" data-region-key="${c}">${c}</span>`
     ).join('');
+  ctBadgeEl.querySelectorAll('.badge').forEach(b =>
+    b.addEventListener('click', () => showRegionPopup('country', b.dataset.regionKey))
+  );
 }
 
 // ── Passport toggle ───────────────────────────────────────────────────────────
@@ -430,6 +467,52 @@ document.getElementById('counter').addEventListener('click', () => {
 document.getElementById('pp-close').addEventListener('click', () => {
   document.getElementById('passport').style.display = 'none';
 });
+
+// ── Region popup (state / country drill-down) ────────────────────────────────
+function showRegionPopup(type, key) {
+  const el = document.getElementById('popup');
+  const filtered = locations.filter(d =>
+    type === 'state' ? d.region.state === key : d.region.country === key
+  ).sort((a,b) => b.rounds.length - a.rounds.length);
+
+  const label = type === 'state' ? (STATE_LABELS[key] || key) : key;
+  const totalRounds = filtered.reduce((s,d) => s + d.rounds.length, 0);
+
+  el.innerHTML = `
+    <div class="ph">
+      <div style="min-width:0">
+        <div class="ph-name">${esc(label)}</div>
+        <div class="ph-meta">${filtered.length} course${filtered.length!==1?'s':''} &nbsp;·&nbsp; ${totalRounds} round${totalRounds!==1?'s':''}</div>
+      </div>
+      <button class="panel-close" id="btn-close">✕</button>
+    </div>
+    <div class="pr">
+      ${filtered.map((d, i) => {
+        const avgColor = d.avg < 80 ? 'var(--green)' : d.avg < 90 ? 'var(--amber)' : 'var(--rose)';
+        return `<div class="region-course" data-loc-idx="${i}">
+          <div class="rc-top">
+            <span class="rc-name">${esc(d.name)}</span>
+            <span class="rc-avg" style="color:${avgColor}">${d.avg.toFixed(1)}</span>
+          </div>
+          <div class="rc-meta">${d.rounds.length} round${d.rounds.length!==1?'s':''}</div>
+          <div class="rc-scores">${d.rounds.map(r =>
+            `<span class="rc-score ${scoreClass(r.score)}">${r.score}</span>`
+          ).join('')}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  el.style.display = 'flex';
+  document.getElementById('btn-close').onclick = () => el.style.display = 'none';
+
+  // Click a course row to drill into the full course detail
+  el.querySelectorAll('.region-course').forEach(row => {
+    row.addEventListener('click', () => {
+      const idx = +row.dataset.locIdx;
+      showPopup(filtered[idx]);
+    });
+  });
+}
 
 // ── Course popup ──────────────────────────────────────────────────────────────
 function showPopup(d) {
