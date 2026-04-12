@@ -436,13 +436,18 @@ function normName(s) {
 }
 function matchScore(a, b) {
   if (a === b) return 1;
-  if (a.includes(b) || b.includes(a)) return 0.95;
-  const aw = a.split(' ').filter(w => w.length > 1);
-  const bw = b.split(' ').filter(w => w.length > 1);
-  let hits = 0;
-  for (const w of aw) {
-    if (bw.some(x => x.startsWith(w) || w.startsWith(x))) hits++;
+  // Reject very short normalized names (e.g. "the" after stripping "golf club")
+  if (a.length < 4 || b.length < 4) return 0;
+  // Substring match only if lengths are similar (prevents "essex county" ⊂ "essex county club")
+  if (a.includes(b) || b.includes(a)) {
+    const ratio = Math.min(a.length, b.length) / Math.max(a.length, b.length);
+    if (ratio > 0.75) return 0.95;
   }
+  // Exact word overlap only (no startsWith — prevents "hill"/"hillside", "pa"/"pasatiempo")
+  const aw = a.split(' ').filter(w => w.length > 2);
+  const bw = b.split(' ').filter(w => w.length > 2);
+  let hits = 0;
+  for (const w of aw) { if (bw.includes(w)) hits++; }
   return aw.length > 0 ? hits / aw.length : 0;
 }
 
