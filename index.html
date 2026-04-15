@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Golf Passport</title>
 
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
@@ -10,163 +10,231 @@
 
 <style>
 :root {
-  --bg-deep:    #060812;
-  --bg-panel:   rgba(8,12,26,0.97);
-  --bg-card:    rgba(255,255,255,0.035);
-  --border:     rgba(255,255,255,0.07);
-  --border-hi:  rgba(255,255,255,0.12);
-  --accent:     #38bdf8;   /* Flighty sky-blue */
-  --accent-dim: rgba(56,189,248,0.15);
+  --bg-deep:    #050810;
+  --bg-panel:   rgba(10,14,30,0.97);
+  --bg-card:    rgba(255,255,255,0.03);
+  --bg-hover:   rgba(255,255,255,0.05);
+  --border:     rgba(255,255,255,0.06);
+  --border-hi:  rgba(255,255,255,0.1);
+  --accent:     #38bdf8;
+  --accent-soft: rgba(56,189,248,0.1);
+  --accent-glow: rgba(56,189,248,0.2);
   --green:      #34d399;
+  --green-soft: rgba(52,211,153,0.1);
   --amber:      #fbbf24;
-  --rose:       #f87171;
+  --amber-soft: rgba(251,191,36,0.1);
+  --rose:       #fb7185;
+  --rose-soft:  rgba(251,113,133,0.1);
   --text-1:     #f1f5f9;
   --text-2:     #94a3b8;
   --text-3:     #475569;
-  --font:       'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --radius-lg:  20px;
+  --radius-md:  12px;
+  --radius-sm:  8px;
+  --shadow-panel: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
+  --shadow-elevated: 0 20px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.05);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); -webkit-font-smoothing: antialiased; }
 #map { width: 100vw; height: 100vh; }
+
+/* Darken map tiles for dark theme harmony */
+.maplibregl-canvas-container canvas {
+  filter: brightness(0.78) saturate(0.7) contrast(1.05);
+}
+
+/* Subtle vignette overlay */
+#map::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, transparent 50%, rgba(5,8,16,0.5) 100%);
+  z-index: 1;
+}
 
 /* ── MapLibre overrides ── */
 .maplibregl-ctrl-bottom-right,
 .maplibregl-ctrl-bottom-left { display: none; }
-.maplibregl-ctrl-top-right .maplibregl-ctrl-zoom-in,
-.maplibregl-ctrl-top-right .maplibregl-ctrl-zoom-out,
-.maplibregl-ctrl-top-right .maplibregl-ctrl-compass {
-  background-color: var(--bg-panel) !important;
-  border-color: var(--border) !important;
+.maplibregl-ctrl-top-right { margin-top: 12px; margin-right: 12px; }
+.maplibregl-ctrl-group {
+  background: var(--bg-panel) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: var(--shadow-panel) !important;
+  overflow: hidden;
 }
+.maplibregl-ctrl-group button {
+  background: transparent !important;
+  border-color: var(--border) !important;
+  width: 36px !important; height: 36px !important;
+}
+.maplibregl-ctrl-group button + button { border-top: 1px solid var(--border) !important; }
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(0.8); }
 
 /* ── Counter pill ── */
 #counter {
-  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+  position: fixed;
+  bottom: max(20px, env(safe-area-inset-bottom, 20px));
+  left: 50%; transform: translateX(-50%);
   background: var(--bg-panel);
-  border: 1px solid var(--border);
-  backdrop-filter: blur(20px);
-  color: var(--text-2); padding: 10px 20px; border-radius: 40px;
+  border: 1px solid var(--border-hi);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  color: var(--text-2);
+  padding: 12px 24px;
+  border-radius: 50px;
   font-size: 0.78em; font-weight: 500; letter-spacing: 0.02em;
   z-index: 1000; cursor: grab; user-select: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  display: flex; align-items: center; gap: 14px;
+  display: flex; align-items: center; gap: 16px;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.15s;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.03);
 }
 #counter:hover {
-  border-color: rgba(56,189,248,0.35);
-  box-shadow: 0 0 20px rgba(56,189,248,0.08);
+  border-color: rgba(56,189,248,0.3);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 30px rgba(56,189,248,0.08), inset 0 0 0 1px rgba(56,189,248,0.12);
 }
-#counter .sep { width: 1px; height: 14px; background: var(--border-hi); flex-shrink: 0; }
-#counter .num { color: var(--text-1); font-weight: 700; }
-#counter .cta { color: var(--accent); font-weight: 600; }
+#counter:active { transform: translateX(-50%) scale(0.97); }
+#counter.dragging { cursor: grabbing; transform: none; }
+#counter .sep { width: 1px; height: 16px; background: var(--border-hi); flex-shrink: 0; }
+#counter .num { color: var(--text-1); font-weight: 800; font-variant-numeric: tabular-nums; }
+#counter .cta {
+  color: var(--accent); font-weight: 700;
+  padding: 4px 12px; border-radius: 20px;
+  background: var(--accent-soft);
+  transition: background 0.15s;
+}
+#counter:hover .cta { background: var(--accent-glow); }
 
 /* ── Legend ── */
 #legend {
-  position: fixed; top: 60px; right: 12px;
+  position: fixed; top: 14px; right: 12px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  backdrop-filter: blur(20px);
-  padding: 10px 14px; border-radius: 12px;
-  font-size: 0.72em; z-index: 1000; line-height: 1;
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  padding: 10px 14px; border-radius: var(--radius-md);
+  font-size: 0.68em; z-index: 1000; line-height: 1;
   cursor: grab; user-select: none;
+  box-shadow: var(--shadow-panel);
+  transition: opacity 0.2s;
 }
 #legend.dragging { cursor: grabbing; }
-
-/* ── Draggable counter ── */
-#counter.dragging { cursor: grabbing; }
+.leg { display: flex; align-items: center; gap: 8px; margin: 5px 0; color: var(--text-2); font-weight: 500; }
+.leg-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; }
 
 /* ── Home city modal ── */
 #home-city-modal {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(8px);
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 5000;
   display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.2s ease;
 }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
 .hc-box {
   background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 28px 32px;
-  max-width: 360px; width: 90%;
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  max-width: 380px; width: 90%;
   text-align: center;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  box-shadow: var(--shadow-elevated);
+  animation: modalPop 0.3s var(--ease-spring);
+}
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.92) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 .hc-box h2 {
-  font-family: var(--font); font-size: 1.05em; font-weight: 700;
-  color: var(--text-1); margin-bottom: 4px;
+  font-family: var(--font); font-size: 1.1em; font-weight: 800;
+  color: var(--text-1); margin-bottom: 6px; letter-spacing: -0.01em;
 }
 .hc-box p {
-  font-family: var(--font); font-size: 0.75em;
-  color: var(--text-2); margin-bottom: 16px;
+  font-family: var(--font); font-size: 0.78em;
+  color: var(--text-2); margin-bottom: 20px; line-height: 1.5;
 }
 .hc-box input {
-  width: 100%; padding: 10px 14px; border-radius: 10px;
-  border: 1px solid var(--border); background: rgba(255,255,255,0.06);
-  color: var(--text-1); font-family: var(--font); font-size: 0.85em;
-  outline: none; transition: border-color 0.15s;
+  width: 100%; padding: 12px 16px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border-hi); background: rgba(255,255,255,0.05);
+  color: var(--text-1); font-family: var(--font); font-size: 0.88em; font-weight: 500;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
 }
-.hc-box input:focus { border-color: var(--accent); }
+.hc-box input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(56,189,248,0.12);
+}
 .hc-box input::placeholder { color: var(--text-3); }
-.hc-box button {
-  margin-top: 12px; padding: 9px 28px; border: none; border-radius: 10px;
-  background: var(--accent); color: #000; font-family: var(--font);
-  font-size: 0.8em; font-weight: 700; cursor: pointer;
-  transition: opacity 0.15s;
+.hc-box button#hc-go {
+  margin-top: 14px; padding: 11px 32px; border: none; border-radius: var(--radius-sm);
+  background: var(--accent); color: #0a0e1a; font-family: var(--font);
+  font-size: 0.82em; font-weight: 800; cursor: pointer; letter-spacing: 0.01em;
+  transition: opacity 0.15s, transform 0.1s;
 }
-.hc-box button:hover { opacity: 0.85; }
+.hc-box button#hc-go:hover { opacity: 0.88; }
+.hc-box button#hc-go:active { transform: scale(0.97); }
 .hc-box .hc-skip {
-  display: block; margin-top: 10px; font-size: 0.68em;
+  display: block; margin-top: 12px; font-size: 0.72em;
   color: var(--text-3); cursor: pointer; background: none; border: none;
-  font-family: var(--font);
+  font-family: var(--font); font-weight: 500;
+  transition: color 0.15s;
 }
 .hc-box .hc-skip:hover { color: var(--text-2); }
-.leg { display: flex; align-items: center; gap: 8px; margin: 5px 0; color: var(--text-2); }
-.leg-dot { width: 9px; height: 9px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); flex-shrink: 0; }
 
 /* ── Shared panel styles ── */
 .panel-close {
-  background: none; border: none; color: var(--text-3); cursor: pointer;
-  font-size: 0.85em; padding: 4px; line-height: 1; border-radius: 6px;
+  background: rgba(255,255,255,0.06); border: none; color: var(--text-3); cursor: pointer;
+  font-size: 0.82em; padding: 6px 8px; line-height: 1; border-radius: var(--radius-sm);
   transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
 }
-.panel-close:hover { color: var(--text-1); background: rgba(255,255,255,0.06); }
+.panel-close:hover { color: var(--text-1); background: rgba(255,255,255,0.1); }
 
 /* ── Course popup ── */
 #popup {
   position: fixed; top: 20px; right: 20px;
-  width: 300px; max-height: calc(100vh - 40px);
+  width: 320px; max-height: calc(100vh - 40px);
   background: var(--bg-panel);
-  border: 1px solid var(--border);
-  backdrop-filter: blur(20px);
-  border-radius: 16px; color: var(--text-1); z-index: 2000;
+  border: 1px solid var(--border-hi);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border-radius: var(--radius-lg); color: var(--text-1); z-index: 2000;
   display: none; flex-direction: column;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
-  overflow: hidden; animation: slideRight 0.18s ease;
+  box-shadow: var(--shadow-elevated);
+  overflow: hidden;
+  animation: slideRight 0.25s var(--ease-spring);
 }
 @keyframes slideRight {
-  from { opacity:0; transform: translateX(10px); }
-  to   { opacity:1; transform: translateX(0); }
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 .ph {
-  padding: 16px 16px 14px;
+  padding: 18px 18px 16px;
   border-bottom: 1px solid var(--border);
   display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
   flex-shrink: 0;
 }
-.ph-name { font-size: 0.88em; font-weight: 700; color: var(--text-1); line-height: 1.35; word-break: break-word; }
+.ph-name { font-size: 0.9em; font-weight: 800; color: var(--text-1); line-height: 1.35; word-break: break-word; }
 .ph-meta { font-size: 0.72em; color: var(--text-3); margin-top: 5px; font-weight: 500; }
-.ph-avg  { font-weight: 700; }
-.pr { overflow-y: auto; flex: 1; }
+.ph-avg  { font-weight: 800; }
+.pr { overflow-y: auto; flex: 1; overscroll-behavior: contain; }
 .pr::-webkit-scrollbar { width: 3px; }
-.pr::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+.pr::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 .rr {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 8px 16px; border-bottom: 1px solid rgba(255,255,255,0.03);
+  padding: 10px 18px; border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background 0.12s;
 }
 .rr:last-child { border-bottom: none; }
+.rr:hover { background: var(--bg-hover); }
 .rd { font-size: 0.75em; color: var(--text-3); font-weight: 500; }
-.rs { font-size: 1.05em; font-weight: 800; font-variant-numeric: tabular-nums; }
+.rs { font-size: 1.1em; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 .sg { color: var(--green); }
 .sy { color: var(--amber); }
 .sr { color: var(--rose); }
@@ -174,44 +242,83 @@ body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); }
 /* ── Passport panel ── */
 #passport {
   position: fixed; top: 20px; left: 20px;
-  width: 300px; max-height: calc(100vh - 40px);
+  width: 320px; max-height: calc(100vh - 40px);
   background: var(--bg-panel);
-  border: 1px solid var(--border);
-  backdrop-filter: blur(20px);
-  border-radius: 16px; color: var(--text-1); z-index: 2001;
+  border: 1px solid var(--border-hi);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border-radius: var(--radius-lg); color: var(--text-1); z-index: 2001;
   display: none; flex-direction: column;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.65);
+  box-shadow: var(--shadow-elevated);
   overflow: hidden;
-  animation: slideLeft 0.2s ease;
+  animation: slideLeft 0.25s var(--ease-spring);
 }
 @keyframes slideLeft {
-  from { opacity:0; transform: translateX(-10px); }
-  to   { opacity:1; transform: translateX(0); }
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Accent gradient line at top */
+#passport::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--green) 50%, var(--accent));
+  opacity: 0.6;
+  z-index: 1;
 }
 
 .pp-header {
-  padding: 18px 16px 16px;
+  padding: 20px 18px 16px;
   border-bottom: 1px solid var(--border);
   display: flex; justify-content: space-between; align-items: flex-start;
   flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(56,189,248,0.04) 0%, transparent 100%);
 }
-.pp-brand { display: flex; flex-direction: column; gap: 2px; }
+.pp-brand { display: flex; flex-direction: column; gap: 1px; }
 .pp-title {
-  font-size: 0.7em; font-weight: 700; letter-spacing: 0.12em;
+  font-size: 0.62em; font-weight: 800; letter-spacing: 0.14em;
   text-transform: uppercase; color: var(--accent);
 }
 .pp-name {
-  font-size: 1.15em; font-weight: 800; color: var(--text-1);
-  margin-top: 2px;
+  font-size: 1.2em; font-weight: 900; color: var(--text-1);
+  margin-top: 3px; letter-spacing: -0.02em;
 }
 .pp-years {
   font-size: 0.68em; font-weight: 500; color: var(--text-3);
-  letter-spacing: 0.06em; margin-top: 1px;
+  letter-spacing: 0.06em; margin-top: 2px;
 }
 
-.pp-body { overflow-y: auto; flex: 1; padding: 0; }
+/* Home city row */
+.pp-home {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.pp-home:hover { background: var(--bg-hover); }
+.pp-home:active { background: rgba(255,255,255,0.07); }
+.pp-home-icon { flex-shrink: 0; color: var(--accent); display: flex; }
+.pp-home-text { flex: 1; min-width: 0; }
+.pp-home-label {
+  font-size: 0.55em; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-3); line-height: 1;
+}
+.pp-home-city {
+  font-size: 0.82em; font-weight: 600; color: var(--text-2);
+  margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pp-home-city.not-set { color: var(--text-3); font-style: italic; }
+.pp-home-action {
+  font-size: 0.65em; font-weight: 700; color: var(--accent);
+  flex-shrink: 0; letter-spacing: 0.02em;
+}
+
+.pp-body { overflow-y: auto; flex: 1; overscroll-behavior: contain; }
 .pp-body::-webkit-scrollbar { width: 3px; }
-.pp-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+.pp-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
 /* stat grid */
 .stat-grid {
@@ -221,14 +328,14 @@ body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); }
 }
 .stat-cell {
   background: var(--bg-panel);
-  padding: 14px 16px;
+  padding: 16px 18px;
 }
 .stat-num {
-  font-size: 2em; font-weight: 900; font-variant-numeric: tabular-nums;
-  color: var(--text-1); line-height: 1; letter-spacing: -0.02em;
+  font-size: 2.2em; font-weight: 900; font-variant-numeric: tabular-nums;
+  color: var(--text-1); line-height: 1; letter-spacing: -0.03em;
 }
 .stat-label {
-  font-size: 0.6em; font-weight: 600; color: var(--text-3);
+  font-size: 0.58em; font-weight: 700; color: var(--text-3);
   text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px;
 }
 
@@ -236,126 +343,211 @@ body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); }
 .pp-details { padding: 4px 0; border-bottom: 1px solid var(--border); }
 .pp-row {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 10px 16px;
+  padding: 11px 18px;
 }
-.pp-row-label { font-size: 0.72em; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.pp-row-label { font-size: 0.68em; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
 .pp-row-right { text-align: right; }
-.pp-row-val { font-size: 0.92em; font-weight: 800; color: var(--text-1); font-variant-numeric: tabular-nums; }
+.pp-row-val { font-size: 0.95em; font-weight: 800; color: var(--text-1); font-variant-numeric: tabular-nums; }
 .pp-row-sub { font-size: 0.62em; font-weight: 500; color: var(--text-3); margin-top: 1px; }
 
 /* best round highlight */
 .pp-best {
-  padding: 14px 16px;
+  padding: 16px 18px;
   border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 14px;
+  display: flex; align-items: center; gap: 16px;
 }
 .pp-best-score {
-  font-size: 2.4em; font-weight: 900; line-height: 1;
+  font-size: 2.6em; font-weight: 900; line-height: 1;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 .pp-best-info { flex: 1; }
-.pp-best-label { font-size: 0.6em; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em; }
+.pp-best-label { font-size: 0.58em; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em; }
 .pp-best-course { font-size: 0.78em; font-weight: 600; color: var(--text-2); margin-top: 3px; }
 .pp-best-date { font-size: 0.65em; font-weight: 500; color: var(--text-3); margin-top: 1px; }
 
 /* sections */
 .pp-section-header {
-  font-size: 0.6em; font-weight: 700; text-transform: uppercase;
+  font-size: 0.58em; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.1em; color: var(--text-3);
-  padding: 12px 16px 6px;
+  padding: 14px 18px 8px;
 }
 .pp-badge-row {
-  display: flex; flex-wrap: wrap; gap: 5px;
-  padding: 0 16px 14px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 0 18px 16px;
 }
 
 .badge {
   font-size: 0.65em; font-weight: 700; letter-spacing: 0.04em;
-  padding: 4px 9px; border-radius: 6px;
+  padding: 5px 10px; border-radius: var(--radius-sm);
   border: 1px solid; cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  transition: all 0.15s ease;
 }
-.badge:hover { transform: scale(1.08); }
+.badge:hover { transform: translateY(-1px); }
+.badge:active { transform: scale(0.96); }
 .badge-us {
-  background: rgba(56,189,248,0.08); color: var(--accent);
-  border-color: rgba(56,189,248,0.18);
+  background: var(--accent-soft); color: var(--accent);
+  border-color: rgba(56,189,248,0.15);
 }
 .badge-us:hover, .badge-us.active {
-  background: rgba(56,189,248,0.2); border-color: rgba(56,189,248,0.45);
+  background: var(--accent-glow); border-color: rgba(56,189,248,0.4);
+  box-shadow: 0 2px 12px rgba(56,189,248,0.1);
 }
 .badge-intl {
-  background: rgba(251,191,36,0.08); color: var(--amber);
-  border-color: rgba(251,191,36,0.18);
+  background: var(--amber-soft); color: var(--amber);
+  border-color: rgba(251,191,36,0.15);
 }
 .badge-intl:hover, .badge-intl.active {
-  background: rgba(251,191,36,0.2); border-color: rgba(251,191,36,0.45);
+  background: rgba(251,191,36,0.18); border-color: rgba(251,191,36,0.4);
+  box-shadow: 0 2px 12px rgba(251,191,36,0.08);
 }
 
 /* region course list (inside popup) */
 .region-course {
-  padding: 10px 16px;
+  padding: 12px 18px;
   border-bottom: 1px solid rgba(255,255,255,0.04);
   cursor: pointer;
   transition: background 0.12s;
 }
 .region-course:last-child { border-bottom: none; }
-.region-course:hover { background: rgba(255,255,255,0.04); }
+.region-course:hover { background: var(--bg-hover); }
 .rc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .rc-name { font-size: 0.8em; font-weight: 700; color: var(--text-1); line-height: 1.3; }
-.rc-avg { font-size: 0.9em; font-weight: 800; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.rc-avg { font-size: 0.92em; font-weight: 900; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .rc-meta { font-size: 0.66em; font-weight: 500; color: var(--text-3); margin-top: 3px; }
-.rc-scores { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.rc-scores { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .rc-score {
-  font-size: 0.62em; font-weight: 700; padding: 2px 5px;
-  border-radius: 4px; background: rgba(255,255,255,0.04);
+  font-size: 0.62em; font-weight: 700; padding: 3px 6px;
+  border-radius: 5px; background: rgba(255,255,255,0.04);
   font-variant-numeric: tabular-nums;
 }
 
 /* top 100 section */
 .t100-count {
-  color: var(--accent); font-weight: 800;
+  color: var(--accent); font-weight: 900;
   font-size: 1.1em; font-variant-numeric: tabular-nums;
 }
 .t100-entry {
-  padding: 10px 16px;
+  padding: 12px 18px;
   border-bottom: 1px solid rgba(255,255,255,0.04);
   cursor: pointer; transition: background 0.12s;
 }
 .t100-entry:last-child { border-bottom: none; }
-.t100-entry:hover { background: rgba(255,255,255,0.04); }
+.t100-entry:hover { background: var(--bg-hover); }
 .t100-top { display: flex; align-items: center; gap: 10px; }
 .t100-rank {
   font-size: 0.7em; font-weight: 900;
   min-width: 28px; text-align: center;
-  padding: 3px 5px; border-radius: 5px;
+  padding: 3px 5px; border-radius: 6px;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0; line-height: 1;
 }
 .t100-elite {
-  background: rgba(251,191,36,0.15); color: var(--amber);
-  border: 1px solid rgba(251,191,36,0.3);
+  background: rgba(251,191,36,0.12); color: var(--amber);
+  border: 1px solid rgba(251,191,36,0.25);
 }
 .t100-ranked {
-  background: rgba(56,189,248,0.1); color: var(--accent);
-  border: 1px solid rgba(56,189,248,0.2);
+  background: var(--accent-soft); color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.18);
 }
 .t100-info { flex: 1; min-width: 0; }
 .t100-name { font-size: 0.78em; font-weight: 700; color: var(--text-1); line-height: 1.3; }
-.t100-list { font-size: 0.58em; font-weight: 600; color: var(--text-3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+.t100-list { font-size: 0.56em; font-weight: 600; color: var(--text-3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
 .t100-scores { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; padding-left: 38px; }
 
 /* ── Course markers ── */
 .cmarker {
-  width: 14px; height: 14px; border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.85);
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.5);
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,0.9);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.3), 0 2px 10px rgba(0,0,0,0.5);
   cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.12s;
+  transition: transform 0.15s var(--ease-spring), box-shadow 0.15s;
 }
 .cmarker:hover {
-  transform: scale(1.6);
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.6), 0 4px 14px rgba(0,0,0,0.6);
+  transform: scale(1.7);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.7), 0 0 20px currentColor, 0 4px 16px rgba(0,0,0,0.5);
+  z-index: 10 !important;
+}
+
+/* ── Mobile responsive ── */
+@media (max-width: 680px) {
+  /* Map vignette: less intense on mobile */
+  #map::after {
+    background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(5,8,16,0.45) 100%);
+  }
+
+  /* Counter becomes fixed bottom bar */
+  #counter {
+    bottom: max(12px, env(safe-area-inset-bottom, 12px));
+    padding: 11px 20px;
+    font-size: 0.74em;
+    gap: 12px;
+    max-width: calc(100vw - 24px);
+  }
+
+  /* Legend: smaller, top-left on mobile */
+  #legend {
+    top: 10px; right: auto; left: 10px;
+    padding: 8px 12px;
+    font-size: 0.62em;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Panels become bottom sheets */
+  #passport, #popup {
+    top: auto !important; left: 0 !important; right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-height: 88vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+  }
+  #passport { animation: slideUp 0.3s var(--ease-spring); }
+  #popup    { animation: slideUp 0.3s var(--ease-spring); }
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0.5; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+
+  /* Sheet drag handle (CSS pseudo) */
+  #passport::before, #popup::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.2);
+    margin: 10px auto 2px;
+    flex-shrink: 0;
+  }
+  /* Move the accent line below the handle on mobile */
+  #passport::after { top: 18px; }
+
+  .pp-header { padding: 10px 18px 14px; }
+  .ph { padding: 14px 18px 12px; }
+  .stat-cell { padding: 14px 16px; }
+  .stat-num { font-size: 1.9em; }
+
+  /* Larger touch targets */
+  .badge { padding: 7px 12px; font-size: 0.68em; }
+  .pp-home { padding: 14px 18px; }
+  .region-course { padding: 14px 18px; }
+  .t100-entry { padding: 14px 18px; }
+  .rr { padding: 12px 18px; }
+  .cmarker { width: 18px; height: 18px; }
+
+  /* Home city modal fullscreen-ish on mobile */
+  .hc-box { max-width: 100%; width: 100%; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    animation: slideUp 0.3s var(--ease-spring);
+    padding: 28px 24px max(24px, env(safe-area-inset-bottom, 24px));
+  }
+}
+
+/* Small phone tweaks */
+@media (max-width: 380px) {
+  .stat-num { font-size: 1.6em; }
+  .stat-cell { padding: 12px 14px; }
+  .pp-name { font-size: 1.05em; }
 }
 </style>
 </head>
@@ -396,7 +588,17 @@ body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); }
       <div class="pp-name" id="pp-name">Matt Pulos</div>
       <div class="pp-years" id="pp-years">2008 – 2025</div>
     </div>
-    <button class="panel-close" id="pp-close">✕</button>
+    <button class="panel-close" id="pp-close">&#x2715;</button>
+  </div>
+  <div class="pp-home" id="pp-home-section">
+    <span class="pp-home-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    </span>
+    <div class="pp-home-text">
+      <div class="pp-home-label">Home Base</div>
+      <div class="pp-home-city not-set" id="pp-home-city">Not set</div>
+    </div>
+    <span class="pp-home-action" id="pp-home-action">Set</span>
   </div>
   <div class="pp-body">
     <div class="stat-grid">
@@ -411,7 +613,7 @@ body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); }
     <div class="pp-details" id="pp-details"></div>
 
     <div id="pp-top100-section" style="display:none; border-bottom: 1px solid var(--border);">
-      <div class="pp-section-header" style="display:flex;justify-content:space-between;align-items:center;padding-right:16px;">
+      <div class="pp-section-header" style="display:flex;justify-content:space-between;align-items:center;padding-right:18px;">
         <span>Top 100 Courses Played</span>
         <span class="t100-count" id="pp-top100-count"></span>
       </div>
@@ -432,7 +634,7 @@ body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); }
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fmtDate(s) { const p = s.split('/'); return `${MONTHS[+p[0]-1]} ${p[2]||p[1]}`; }
 function fmtYear(s) { const p = s.split('/'); return +(p[2]||p[1]); }
-function pinColor(avg) { return avg < 80 ? '#34d399' : avg < 90 ? '#fbbf24' : '#f87171'; }
+function pinColor(avg) { return avg < 80 ? '#34d399' : avg < 90 ? '#fbbf24' : '#fb7185'; }
 function scoreClass(s) { return s < 80 ? 'sg' : s < 90 ? 'sy' : 'sr'; }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -461,7 +663,6 @@ const STATE_LABELS = {
 const STATE_ORDER = ['PA','DE','NJ','NY','NC','SC','FL','AZ','CA','HI'];
 
 // ── Top 100 course lists (from top100golfcourses.com) ─────────────────────────
-// Format: [rank, list, name]  list: "US" or "GBI" (Great Britain & Ireland)
 const TOP_100 = [
   [1,"GBI","Royal County Down (Championship)"],[2,"GBI","St Andrews (Old Course)"],[3,"GBI","Royal Portrush (Dunluce)"],[4,"GBI","Muirfield"],[5,"GBI","Turnberry (Ailsa)"],[6,"GBI","Royal Dornoch (Championship)"],[7,"GBI","Royal St George's"],[8,"GBI","Sunningdale (Old)"],[9,"GBI","Ballybunion (Old)"],[10,"GBI","Lahinch (Old)"],
   [11,"GBI","Carnoustie (Championship)"],[12,"GBI","Rosapenna (St Patrick's Links)"],[13,"GBI","Sunningdale (New)"],[14,"GBI","North Berwick (West Links)"],[15,"GBI","Kingsbarns"],[16,"GBI","Ardfin"],[17,"GBI","St Enodoc (Church)"],[18,"GBI","Swinley Forest"],[19,"GBI","Castle Stuart"],[20,"GBI","Royal Lytham & St Annes"],
@@ -485,7 +686,6 @@ const TOP_100 = [
   [91,"US","Congressional Country Club (Blue)"],[92,"US","Scottsdale National (Other Course)"],[93,"US","Moraine Country Club"],[94,"US","Lost Rail Golf Club"],[95,"US","Streamsong Red"],[96,"US","Chambers Bay"],[97,"US","Fox Chapel Golf Club"],[98,"US","Sedge Valley"],[99,"US","Medinah Country Club (No. 3)"],[100,"US","Old Macdonald"]
 ];
 
-// Fuzzy name matching for top 100 cross-reference
 function normName(s) {
   return s.toLowerCase()
     .replace(/[()]/g, '').replace(/[-]/g, ' ')
@@ -498,14 +698,11 @@ function normName(s) {
 }
 function matchScore(a, b) {
   if (a === b) return 1;
-  // Reject very short normalized names (e.g. "the" after stripping "golf club")
   if (a.length < 4 || b.length < 4) return 0;
-  // Substring match only if lengths are similar (prevents "essex county" ⊂ "essex county club")
   if (a.includes(b) || b.includes(a)) {
     const ratio = Math.min(a.length, b.length) / Math.max(a.length, b.length);
     if (ratio > 0.75) return 0.95;
   }
-  // Exact word overlap only (no startsWith — prevents "hill"/"hillside", "pa"/"pasatiempo")
   const aw = a.split(' ').filter(w => w.length > 2);
   const bw = b.split(' ').filter(w => w.length > 2);
   let hits = 0;
@@ -555,12 +752,85 @@ const allYears   = validRounds.map(r => fmtYear(r.date));
 const firstYear  = Math.min(...allYears);
 const lastYear   = Math.max(...allYears);
 
+// ── Home city display ─────────────────────────────────────────────────────────
+function updateHomeCityDisplay() {
+  const cityEl = document.getElementById('pp-home-city');
+  const actionEl = document.getElementById('pp-home-action');
+  if (!cityEl) return;
+  const saved = localStorage.getItem('golf_home_city');
+  if (saved && saved !== '__skipped__') {
+    cityEl.textContent = saved;
+    cityEl.classList.remove('not-set');
+    actionEl.textContent = 'Change';
+  } else {
+    cityEl.textContent = 'Not set';
+    cityEl.classList.add('not-set');
+    actionEl.textContent = 'Set';
+  }
+}
+
+// ── Home city modal (set up listeners once) ───────────────────────────────────
+const hcModal = document.getElementById('home-city-modal');
+const hcInput = document.getElementById('hc-input');
+let hcIsEdit = false;
+
+function openHomeCityModal(edit) {
+  hcIsEdit = !!edit;
+  const h2 = hcModal.querySelector('h2');
+  const p = hcModal.querySelector('p');
+  const skip = document.getElementById('hc-skip');
+
+  if (hcIsEdit) {
+    h2.textContent = 'Change Home Base';
+    p.textContent = 'Enter a city to recenter the map';
+    skip.textContent = 'Cancel';
+    const saved = localStorage.getItem('golf_home_city');
+    hcInput.value = (saved && saved !== '__skipped__') ? saved : '';
+  } else {
+    h2.textContent = 'Welcome to Golf Passport';
+    p.textContent = 'Enter your home city to center the map';
+    skip.textContent = 'Skip';
+    hcInput.value = '';
+  }
+
+  hcModal.style.display = 'flex';
+  setTimeout(() => hcInput.focus(), 120);
+}
+
+function submitHomeCity() {
+  const val = hcInput.value.trim();
+  hcModal.style.display = 'none';
+  if (val) {
+    geocodeAndFly(val);
+    setTimeout(updateHomeCityDisplay, 400);
+  } else if (!hcIsEdit) {
+    flyToDefault();
+  }
+}
+
+document.getElementById('hc-go').addEventListener('click', submitHomeCity);
+hcInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitHomeCity(); });
+document.getElementById('hc-skip').addEventListener('click', () => {
+  hcModal.style.display = 'none';
+  if (!hcIsEdit) {
+    localStorage.setItem('golf_home_city', '__skipped__');
+    flyToDefault();
+  }
+});
+
+// Home city row in passport — tap to edit
+document.getElementById('pp-home-section').addEventListener('click', () => {
+  openHomeCityModal(true);
+});
+
 function buildPassport() {
   document.getElementById('pp-rounds').textContent    = validRounds.length;
   document.getElementById('pp-courses').textContent   = locations.length;
   document.getElementById('pp-states').textContent    = stateSet.size;
   document.getElementById('pp-countries').textContent = countrySet.size;
-  document.getElementById('pp-years').textContent     = `${firstYear} – ${lastYear}`;
+  document.getElementById('pp-years').textContent     = `${firstYear} \u2013 ${lastYear}`;
+
+  updateHomeCityDisplay();
 
   // Best round highlight
   const bestColor = bestRound.score < 80 ? 'var(--green)' : bestRound.score < 90 ? 'var(--amber)' : 'var(--rose)';
@@ -588,14 +858,13 @@ function buildPassport() {
       </div>
     </div>`;
 
-  // Top 100 matching — check each location against the top 100 list
+  // Top 100 matching
   const top100Matches = [];
   locations.forEach(loc => {
     const isUSA = loc.region.country === 'USA';
     const isGBI = loc.region.country === 'Scotland' || loc.region.country === 'England';
     if (!isUSA && !isGBI) return;
     const listFilter = isUSA ? 'US' : 'GBI';
-    // Collect all course name variants at this location
     const nameVariants = new Set([loc.name, ...loc.rounds.map(r => r.course)]);
     const normVariants = [...nameVariants].map(n => normName(n));
     for (const entry of TOP_100) {
@@ -613,7 +882,6 @@ function buildPassport() {
     return a.rank - b.rank;
   });
 
-  // Populate top 100 section
   const t100Section = document.getElementById('pp-top100-section');
   if (top100Matches.length > 0) {
     t100Section.style.display = 'block';
@@ -636,7 +904,6 @@ function buildPassport() {
       </div>`;
     }).join('');
 
-    // Click to drill into course detail
     document.getElementById('pp-top100').querySelectorAll('.t100-entry').forEach(row => {
       row.addEventListener('click', () => {
         showPopup(top100Matches[+row.dataset.t100Idx].loc);
@@ -644,7 +911,7 @@ function buildPassport() {
     });
   }
 
-  // State badges (clickable)
+  // State badges
   const orderedStates = STATE_ORDER.filter(s => stateSet.has(s));
   const extraStates   = [...stateSet].filter(s => !STATE_ORDER.includes(s)).sort();
   const stBadgeEl = document.getElementById('pp-state-badges');
@@ -656,7 +923,7 @@ function buildPassport() {
     b.addEventListener('click', () => showRegionPopup('state', b.dataset.regionKey))
   );
 
-  // Country badges (clickable)
+  // Country badges
   const countryOrder = ['USA', 'England', 'Scotland'];
   const orderedCountries = countryOrder.filter(c => countrySet.has(c));
   const extraCountries   = [...countrySet].filter(c => !countryOrder.includes(c)).sort();
@@ -672,7 +939,6 @@ function buildPassport() {
 
 // ── Passport toggle ───────────────────────────────────────────────────────────
 let passportBuilt = false;
-// Counter click is now handled by makeDraggable below
 document.getElementById('pp-close').addEventListener('click', () => {
   document.getElementById('passport').style.display = 'none';
 });
@@ -691,9 +957,9 @@ function showRegionPopup(type, key) {
     <div class="ph">
       <div style="min-width:0">
         <div class="ph-name">${esc(label)}</div>
-        <div class="ph-meta">${filtered.length} course${filtered.length!==1?'s':''} &nbsp;·&nbsp; ${totalRounds} round${totalRounds!==1?'s':''}</div>
+        <div class="ph-meta">${filtered.length} course${filtered.length!==1?'s':''} &nbsp;\u00b7&nbsp; ${totalRounds} round${totalRounds!==1?'s':''}</div>
       </div>
-      <button class="panel-close" id="btn-close">✕</button>
+      <button class="panel-close" id="btn-close">&#x2715;</button>
     </div>
     <div class="pr">
       ${filtered.map((d, i) => {
@@ -714,7 +980,6 @@ function showRegionPopup(type, key) {
   el.style.display = 'flex';
   document.getElementById('btn-close').onclick = () => el.style.display = 'none';
 
-  // Click a course row to drill into the full course detail
   el.querySelectorAll('.region-course').forEach(row => {
     row.addEventListener('click', () => {
       const idx = +row.dataset.locIdx;
@@ -726,14 +991,14 @@ function showRegionPopup(type, key) {
 // ── Course popup ──────────────────────────────────────────────────────────────
 function showPopup(d) {
   const el = document.getElementById('popup');
-  const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${d.color};margin-right:6px;vertical-align:middle"></span>`;
+  const dot = `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${d.color};margin-right:7px;vertical-align:middle;box-shadow:0 0 6px ${d.color}"></span>`;
   el.innerHTML = `
     <div class="ph">
       <div style="min-width:0">
         <div class="ph-name">${dot}${esc(d.name)}</div>
-        <div class="ph-meta">${d.rounds.length} round${d.rounds.length!==1?'s':''} &nbsp;·&nbsp; <span class="ph-avg" style="color:${d.color}">Avg ${d.avg.toFixed(1)}</span></div>
+        <div class="ph-meta">${d.rounds.length} round${d.rounds.length!==1?'s':''} &nbsp;\u00b7&nbsp; <span class="ph-avg" style="color:${d.color}">Avg ${d.avg.toFixed(1)}</span></div>
       </div>
-      <button class="panel-close" id="btn-close">✕</button>
+      <button class="panel-close" id="btn-close">&#x2715;</button>
     </div>
     <div class="pr">${d.rounds.map(r=>`
       <div class="rr">
@@ -757,7 +1022,7 @@ const map = new maplibregl.Map({
 
 map.on('click', () => { document.getElementById('popup').style.display = 'none'; });
 
-// ── Home city prompt & fly-to ─────────────────────────────────────────────
+// ── Home city geocode & fly-to ──────────────────────────────────────────────
 function flyToHome(lon, lat) {
   map.flyTo({ center: [lon, lat], zoom: 8, speed: 0.6, curve: 1.8, essential: true });
 }
@@ -788,33 +1053,12 @@ function flyToDefault() {
   }
 }
 
-function showHomeCityModal() {
-  const modal = document.getElementById('home-city-modal');
-  modal.style.display = 'flex';
-  const input = document.getElementById('hc-input');
-  setTimeout(() => input.focus(), 100);
-
-  function submit() {
-    const val = input.value.trim();
-    modal.style.display = 'none';
-    if (val) geocodeAndFly(val);
-    else flyToDefault();
-  }
-
-  document.getElementById('hc-go').addEventListener('click', submit);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
-  document.getElementById('hc-skip').addEventListener('click', () => {
-    modal.style.display = 'none';
-    localStorage.setItem('golf_home_city', '__skipped__');
-    flyToDefault();
-  });
-}
-
 map.on('load', () => {
   locations.forEach(d => {
     const el = document.createElement('div');
     el.className = 'cmarker';
     el.style.background = d.color;
+    el.style.color = d.color;
     el.title = d.name;
     el.addEventListener('click', e => { e.stopPropagation(); showPopup(d); });
     new maplibregl.Marker({ element: el, anchor: 'center' })
@@ -833,7 +1077,7 @@ map.on('load', () => {
       geocodeAndFly(savedCity);
     }
   } else if (!savedCity) {
-    showHomeCityModal();
+    openHomeCityModal(false);
   } else {
     flyToDefault();
   }
