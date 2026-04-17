@@ -152,6 +152,7 @@ window.GOLF_DATA = [
   {"date":"9/1/2017","score":86,"course_name":"Bethpage State Park Golf Club Black","lat":40.7452,"lon":-73.4629},
   {"date":"4/1/2018","score":81,"course_name":"Ballyowen Golf","lat":41.1986,"lon":-74.544},
   {"date":"6/1/2018","score":81,"course_name":"Canoe Brook South","lat":40.7339054,"lon":-74.3612992},
+  {"date":"6/9/2018","score":null,"course_name":"Harborside International Port Course","lat":41.6838,"lon":-87.5814},
   {"date":"7/1/2018","score":80,"course_name":"Trump National Golf Club - Hud","lat":41.5749855,"lon":-73.7613732},
   {"date":"7/1/2018","score":85,"course_name":"Aronimink Golf Club","lat":40.0088426,"lon":-75.4119538},
   {"date":"8/1/2018","score":75,"course_name":"St Davids Golf Club","lat":40.058288,"lon":-75.384693},
