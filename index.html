@@ -238,6 +238,7 @@ body { background: var(--bg-deep); overflow: hidden; font-family: var(--font); -
 .sg { color: var(--green); }
 .sy { color: var(--amber); }
 .sr { color: var(--rose); }
+.sn { color: var(--text-3); font-style: italic; }
 
 /* ── Passport panel ── */
 #passport {
@@ -635,13 +636,15 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 function fmtDate(s) { const p = s.split('/'); return `${MONTHS[+p[0]-1]} ${p[2]||p[1]}`; }
 function fmtYear(s) { const p = s.split('/'); return +(p[2]||p[1]); }
 function pinColor(avg) { return avg < 80 ? '#34d399' : avg < 90 ? '#fbbf24' : '#fb7185'; }
-function scoreClass(s) { return s < 80 ? 'sg' : s < 90 ? 'sy' : 'sr'; }
+function scoreClass(s) { return s == null ? 'sn' : s < 80 ? 'sg' : s < 90 ? 'sy' : 'sr'; }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ── Region inference from lat/lon ─────────────────────────────────────────────
 function inferRegion(lat, lon) {
-  if (lat > 54)                                        return { country: 'Scotland',  state: null };
-  if (lat > 49)                                        return { country: 'England',   state: null };
+  if (lon < -5.5 && lat > 54)                          return { country: 'N. Ireland', state: null };
+  if (lon < -5.5 && lat > 49)                          return { country: 'Ireland',    state: null };
+  if (lat > 54)                                        return { country: 'Scotland',   state: null };
+  if (lat > 49)                                        return { country: 'England',    state: null };
   if (lat < 23 && lon < -150)                          return { country: 'USA', state: 'HI' };
   if (lon < -115)                                      return { country: 'USA', state: 'CA' };
   if (lon < -109 && lat < 37)                          return { country: 'USA', state: 'AZ' };
@@ -726,8 +729,9 @@ const locations = Object.values(byCoord).map(d => {
     const ya = +(pa[2]||pa[1]), yb = +(pb[2]||pb[1]);
     return ya !== yb ? yb-ya : +pb[0]-+pa[0];
   });
-  d.avg = d.rounds.reduce((s,r) => s+r.score, 0) / d.rounds.length;
-  d.color = pinColor(d.avg);
+  const scored = d.rounds.filter(r => r.score != null);
+  d.avg = scored.length > 0 ? scored.reduce((s,r) => s+r.score, 0) / scored.length : null;
+  d.color = d.avg != null ? pinColor(d.avg) : '#94a3b8';
   return d;
 });
 
@@ -745,8 +749,9 @@ locations.forEach(d => {
   countrySet.add(reg.country);
 });
 
-const bestRound  = validRounds.reduce((b, r) => r.score < b.score ? r : b);
-const avgScore   = (validRounds.reduce((s,r) => s+r.score, 0) / validRounds.length).toFixed(1);
+const scoredRounds = validRounds.filter(r => r.score != null);
+const bestRound  = scoredRounds.reduce((b, r) => r.score < b.score ? r : b);
+const avgScore   = (scoredRounds.reduce((s,r) => s+r.score, 0) / scoredRounds.length).toFixed(1);
 const mostPlayed = locations.reduce((a,b) => a.rounds.length > b.rounds.length ? a : b);
 const allYears   = validRounds.map(r => fmtYear(r.date));
 const firstYear  = Math.min(...allYears);
@@ -862,7 +867,7 @@ function buildPassport() {
   const top100Matches = [];
   locations.forEach(loc => {
     const isUSA = loc.region.country === 'USA';
-    const isGBI = loc.region.country === 'Scotland' || loc.region.country === 'England';
+    const isGBI = ['Scotland','England','Ireland','N. Ireland'].includes(loc.region.country);
     if (!isUSA && !isGBI) return;
     const listFilter = isUSA ? 'US' : 'GBI';
     const nameVariants = new Set([loc.name, ...loc.rounds.map(r => r.course)]);
@@ -899,7 +904,7 @@ function buildPassport() {
           </div>
         </div>
         <div class="t100-scores">${d.rounds.map(r =>
-          `<span class="rc-score ${scoreClass(r.score)}">${r.score}</span>`
+          `<span class="rc-score ${scoreClass(r.score)}">${r.score != null ? r.score : 'NR'}</span>`
         ).join('')}</div>
       </div>`;
     }).join('');
@@ -924,7 +929,7 @@ function buildPassport() {
   );
 
   // Country badges
-  const countryOrder = ['USA', 'England', 'Scotland'];
+  const countryOrder = ['USA', 'England', 'Scotland', 'Ireland', 'N. Ireland'];
   const orderedCountries = countryOrder.filter(c => countrySet.has(c));
   const extraCountries   = [...countrySet].filter(c => !countryOrder.includes(c)).sort();
   const ctBadgeEl = document.getElementById('pp-country-badges');
@@ -963,15 +968,15 @@ function showRegionPopup(type, key) {
     </div>
     <div class="pr">
       ${filtered.map((d, i) => {
-        const avgColor = d.avg < 80 ? 'var(--green)' : d.avg < 90 ? 'var(--amber)' : 'var(--rose)';
+        const avgColor = d.avg != null ? (d.avg < 80 ? 'var(--green)' : d.avg < 90 ? 'var(--amber)' : 'var(--rose)') : 'var(--text-3)';
         return `<div class="region-course" data-loc-idx="${i}">
           <div class="rc-top">
             <span class="rc-name">${esc(d.name)}</span>
-            <span class="rc-avg" style="color:${avgColor}">${d.avg.toFixed(1)}</span>
+            <span class="rc-avg" style="color:${avgColor}">${d.avg != null ? d.avg.toFixed(1) : 'NR'}</span>
           </div>
           <div class="rc-meta">${d.rounds.length} round${d.rounds.length!==1?'s':''}</div>
           <div class="rc-scores">${d.rounds.map(r =>
-            `<span class="rc-score ${scoreClass(r.score)}">${r.score}</span>`
+            `<span class="rc-score ${scoreClass(r.score)}">${r.score != null ? r.score : 'NR'}</span>`
           ).join('')}</div>
         </div>`;
       }).join('')}
@@ -996,14 +1001,14 @@ function showPopup(d) {
     <div class="ph">
       <div style="min-width:0">
         <div class="ph-name">${dot}${esc(d.name)}</div>
-        <div class="ph-meta">${d.rounds.length} round${d.rounds.length!==1?'s':''} &nbsp;\u00b7&nbsp; <span class="ph-avg" style="color:${d.color}">Avg ${d.avg.toFixed(1)}</span></div>
+        <div class="ph-meta">${d.rounds.length} round${d.rounds.length!==1?'s':''} &nbsp;\u00b7&nbsp; <span class="ph-avg" style="color:${d.color}">${d.avg != null ? 'Avg ' + d.avg.toFixed(1) : 'No scores'}</span></div>
       </div>
       <button class="panel-close" id="btn-close">&#x2715;</button>
     </div>
     <div class="pr">${d.rounds.map(r=>`
       <div class="rr">
         <span class="rd">${fmtDate(r.date)}${r.course !== d.name ? `<br><span style="font-size:0.85em;opacity:0.55">${esc(r.course)}</span>` : ''}</span>
-        <span class="rs ${scoreClass(r.score)}">${r.score}</span>
+        <span class="rs ${scoreClass(r.score)}">${r.score != null ? r.score : 'NR'}</span>
       </div>`).join('')}
     </div>`;
   el.style.display = 'flex';
